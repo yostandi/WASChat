@@ -4,12 +4,19 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
+import android.graphics.PorterDuff.Mode;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.net.Uri;
 import android.util.Log;
+import android.util.Pair;
+
+import org.thoughtcrime.securesms.crypto.MasterSecret;
+import org.thoughtcrime.securesms.mms.PartAuthority;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
@@ -23,19 +30,19 @@ public class BitmapUtil {
   private static final int MIN_COMPRESSION_QUALITY  = 50;
   private static final int MAX_COMPRESSION_ATTEMPTS = 4;
 
-  public static byte[] createScaledBytes(Context context, Uri uri, int maxWidth,
+  public static byte[] createScaledBytes(Context context, MasterSecret masterSecret, Uri uri, int maxWidth,
                                          int maxHeight, int maxSize)
       throws IOException, BitmapDecodingException
   {
     Bitmap bitmap;
     try {
-      bitmap = createScaledBitmap(context.getContentResolver().openInputStream(uri),
-                                  context.getContentResolver().openInputStream(uri),
+      bitmap = createScaledBitmap(PartAuthority.getPartStream(context, masterSecret, uri),
+                                  PartAuthority.getPartStream(context, masterSecret, uri),
                                   maxWidth, maxHeight, false);
     } catch(OutOfMemoryError oome) {
       Log.w(TAG, "OutOfMemoryError when scaling precisely, doing rough scale to save memory instead");
-      bitmap = createScaledBitmap(context.getContentResolver().openInputStream(uri),
-                                  context.getContentResolver().openInputStream(uri),
+      bitmap = createScaledBitmap(PartAuthority.getPartStream(context, masterSecret, uri),
+                                  PartAuthority.getPartStream(context, masterSecret, uri),
                                   maxWidth, maxHeight, true);
     }
     int quality         = MAX_COMPRESSION_QUALITY;
@@ -154,6 +161,11 @@ public class BitmapUtil {
     return options;
   }
 
+  public static Pair<Integer, Integer> getDimensions(InputStream inputStream) {
+    BitmapFactory.Options options = getImageDimensions(inputStream);
+    return new Pair<>(options.outWidth, options.outHeight);
+  }
+
   public static Bitmap getCircleCroppedBitmap(Bitmap bitmap) {
     if (bitmap == null) return null;
     final int srcSize = Math.min(bitmap.getWidth(), bitmap.getHeight());
@@ -179,6 +191,24 @@ public class BitmapUtil {
     canvas.drawCircle(destSize / 2, destSize / 2, destSize / 2, paint);
     paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
     canvas.drawBitmap(bitmap, srcRect, destRect, paint);
+    return output;
+  }
+
+  public static Bitmap getRoundedCornerBitmap(Bitmap bitmap, int i) {
+    Bitmap output = Bitmap.createBitmap(bitmap.getWidth(), bitmap.getHeight(),
+                                        Bitmap.Config.ARGB_8888);
+    Canvas canvas = new Canvas(output);
+
+    final int color = 0xff424242;
+    final Paint paint = new Paint();
+    final Rect rect = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
+    final RectF rectF = new RectF(rect);
+    paint.setAntiAlias(true);
+    canvas.drawARGB(0, 0, 0, 0);
+    paint.setColor(Color.BLUE);
+    canvas.drawRoundRect(rectF, i, i, paint);
+    paint.setXfermode(new PorterDuffXfermode(Mode.SRC_IN));
+    canvas.drawBitmap(bitmap, rect, rect, paint);
     return output;
   }
 

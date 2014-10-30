@@ -46,8 +46,8 @@ import dagger.ObjectGraph;
  */
 public class ApplicationContext extends Application implements DependencyInjector {
 
-  private JobManager jobManager;
-  private ObjectGraph objectGraph;
+  private JobManager             jobManager;
+  private ObjectGraph            objectGraph;
 
   public static ApplicationContext getInstance(Context context) {
     return (ApplicationContext)context.getApplicationContext();
@@ -71,7 +71,6 @@ public class ApplicationContext extends Application implements DependencyInjecto
   public JobManager getJobManager() {
     return jobManager;
   }
-
 
   private void initializeRandomNumberFix() {
     Security.insertProviderAt(new org.spongycastle.jce.provider.BouncyCastleProvider(), 1);
@@ -102,5 +101,4 @@ public class ApplicationContext extends Application implements DependencyInjecto
       this.jobManager.add(new GcmRefreshJob(this));
     }
   }
-
 }

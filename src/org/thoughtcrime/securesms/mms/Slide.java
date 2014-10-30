@@ -50,7 +50,6 @@ import ws.com.google.android.mms.pdu.PduPart;
 
 public abstract class Slide {
 
-
   private   static final int MAX_CACHE_SIZE = 20;
   protected static final Map<Uri, SoftReference<Drawable>> thumbnailCache =
       Collections.synchronizedMap(new LRUCache<Uri, SoftReference<Drawable>>(MAX_CACHE_SIZE));
@@ -173,7 +172,7 @@ public abstract class Slide {
   public abstract SMILRegionElement getSmilRegion(SMILDocument document);
 
   public abstract SMILMediaElement getMediaElement(SMILDocument document);
-  
+
   private void setThumbnailOn(ImageView imageView, Drawable thumbnail, boolean fromMemory) {
     if (fromMemory) {
       imageView.setImageDrawable(thumbnail);

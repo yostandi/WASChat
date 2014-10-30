@@ -703,6 +703,7 @@ public class DatabaseFactory {
       if (oldVersion < INTRODUCED_THUMBNAILS_VERSION) {
         db.execSQL("ALTER TABLE part ADD COLUMN _thumbnail TEXT");
         db.execSQL("ALTER TABLE part ADD COLUMN data_size INTEGER");
+        db.execSQL("ALTER TABLE part ADD COLUMN aspect_ratio REAL");
       }
 
       db.setTransactionSuccessful();

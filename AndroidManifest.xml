@@ -311,6 +311,10 @@
             <action android:name="org.thoughtcrime.securesms.MessageNotifier.DELETE_REMINDER_ACTION"/>
         </intent-filter>
     </receiver>
+        <provider android:name=".mms.PartProvider"
+                  android:grantUriPermissions="true"
+                  android:authorities="org.thoughtcrime.provider.securesms" />
+
        <uses-library android:name="android.test.runner" />
 </application>
 </manifest>

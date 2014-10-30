@@ -17,10 +17,20 @@
 
 package ws.com.google.android.mms.pdu;
 
+import android.content.Context;
 import android.net.Uri;
 
+import org.thoughtcrime.securesms.crypto.MasterSecret;
+import org.thoughtcrime.securesms.mms.MediaConstraints;
+import org.thoughtcrime.securesms.util.BitmapDecodingException;
+import org.thoughtcrime.securesms.util.BitmapUtil;
+import org.thoughtcrime.securesms.util.Util;
+
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+
+import ws.com.google.android.mms.ContentType;
 
 /**
  * The pdu part.
@@ -163,6 +173,40 @@ public class PduPart {
 
      public long getDataSize() {
        return this.dataSize;
+     }
+
+     public boolean isImage() {
+       return ContentType.isImageType(Util.toIsoString(getContentType()));
+     }
+
+     public boolean isAudio() {
+       return ContentType.isAudioType(Util.toIsoString(getContentType()));
+     }
+
+     public boolean isVideo() {
+       return ContentType.isVideoType(Util.toIsoString(getContentType()));
+     }
+
+     public boolean canResize() {
+       return isImage();
+     }
+     public void resize(Context context, MasterSecret masterSecret, MediaConstraints constraints)
+         throws IOException
+     {
+       if (!canResize()) {
+         throw new UnsupportedOperationException("Cannot resize this content type");
+       }
+
+       try {
+         byte[] data = BitmapUtil.createScaledBytes(context, masterSecret, getDataUri(),
+                                                    constraints.getImageMaxWidth(),
+                                                    constraints.getImageMaxHeight(),
+                                                    constraints.getImageMaxSize());
+         setData(data);
+         setDataSize(data.length);
+       } catch (BitmapDecodingException bde) {
+         throw new IOException(bde);
+       }
      }
 
      /**
@@ -326,7 +370,7 @@ public class PduPart {
      /**
       *  Set Content-Type value.
       *
-      *  @param value the value
+      *  @param contentType the value
       *  @throws NullPointerException if the value is null.
       */
      public void setContentType(byte[] contentType) {
@@ -349,7 +393,7 @@ public class PduPart {
      /**
       * Set Content-Transfer-Encoding value
       *
-      * @param contentId the content-id value
+      * @param contentTransferEncoding the value
       * @throws NullPointerException if the value is null.
       */
      public void setContentTransferEncoding(byte[] contentTransferEncoding) {

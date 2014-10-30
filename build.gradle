@@ -43,6 +43,8 @@ dependencies {
     compile 'com.android.support:appcompat-v7:20.0.0'
     compile 'com.madgag.spongycastle:prov:1.51.0.0'
     compile 'com.google.zxing:android-integration:3.1.0'
+    compile 'de.greenrobot:eventbus:2.2.1'
+    compile 'com.nineoldandroids:library:2.4.0'
     compile ('com.android.support:support-v4-preferencefragment:1.0.0@aar'){
         exclude module: 'support-v4'
     }

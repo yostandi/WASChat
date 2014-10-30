@@ -25,6 +25,8 @@ import org.w3c.dom.smil.SMILMediaElement;
 import org.w3c.dom.smil.SMILRegionElement;
 
 import ws.com.google.android.mms.pdu.PduPart;
+
+import android.annotation.TargetApi;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
@@ -38,6 +40,7 @@ import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Build.VERSION_CODES;
 import android.provider.MediaStore;
 import android.util.Log;
 
@@ -58,8 +61,8 @@ public class VideoSlide extends Slide {
     super(context, constructPartFromUri(context, uri));
   }
 
-  @SuppressLint("NewApi")
   @Override
+  @TargetApi(VERSION_CODES.GINGERBREAD_MR1)
   public Drawable getThumbnail(int width, int height) {
     Drawable thumbnail = getCachedThumbnail();
 
@@ -82,7 +85,7 @@ public class VideoSlide extends Slide {
     }
 
     if (!PartAuthority.isLocal(part.getDataUri()) &&
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD_MR1)
+        Build.VERSION.SDK_INT >= VERSION_CODES.GINGERBREAD_MR1)
     {
       MediaMetadataRetriever metadataRetriever = new MediaMetadataRetriever();
       metadataRetriever.setDataSource(context, part.getDataUri());
@@ -125,7 +128,7 @@ public class VideoSlide extends Slide {
     PduPart         part     = new PduPart();
     ContentResolver resolver = context.getContentResolver();
     Cursor          cursor   = null;
-		
+
     try {
       cursor = resolver.query(uri, new String[] {MediaStore.Video.Media.MIME_TYPE}, null, null, null);
       if (cursor != null && cursor.moveToFirst()) {
@@ -136,14 +139,11 @@ public class VideoSlide extends Slide {
       if (cursor != null)
         cursor.close();
     }
-		
-//    if (getMediaSize(context, uri) > MAX_MESSAGE_SIZE)
-//      throw new MediaTooLargeException("Video exceeds maximum message size.");
-		
+
     part.setDataUri(uri);
     part.setContentId((System.currentTimeMillis()+"").getBytes());
     part.setName(("Video" + System.currentTimeMillis()).getBytes());
-		
+
     return part;
   }
 }
