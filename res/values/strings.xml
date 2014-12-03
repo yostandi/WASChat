@@ -705,6 +705,13 @@
     <string name="preferences__sms_fallback_never_send_mms">Never send MMS</string>
     <string name="preferences__sms_fallback_non_push_users">Non-TextSecure users</string>
     <string name="preferences__sms_fallback_nobody">Nobody</string>
+    <string name="preferences__media">Media auto-download</string>
+    <string name="preferences__media_mobile_data">Mobile data</string>
+    <string name="preferences__media_wifi">Wi-Fi</string>
+    <string name="preferences__media_roaming">Roaming</string>
+    <string name="preferences__media_images">Images</string>
+    <string name="preferences__media_video">Video</string>
+    <string name="preferences__media_audio">Audio</string>
 
     <!-- **************************************** -->
     <!-- menus -->
