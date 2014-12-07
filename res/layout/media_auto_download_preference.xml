@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical"
+    android:padding="15dp">
+
+    <CheckBox android:id="@+id/media_images"
+        style="@style/TextSecureDialogPrimaryText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:checkMark="?android:attr/listChoiceIndicatorMultiple"
+        android:singleLine="true"
+        android:text="@string/preferences__media_images" />
+
+    <CheckBox android:id="@+id/media_audio"
+        style="@style/TextSecureDialogPrimaryText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:checkMark="?android:attr/listChoiceIndicatorMultiple"
+        android:text="@string/preferences__media_audio" />
+
+    <CheckBox android:id="@+id/media_video"
+        style="@style/TextSecureDialogPrimaryText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:checkMark="?android:attr/listChoiceIndicatorMultiple"
+        android:text="@string/preferences__media_video" />
+
+</LinearLayout>

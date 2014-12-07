@@ -86,4 +86,8 @@
         <attr name="backgroundColor" format="string"/>
         <attr name="strokeWidth" format="integer"/>
     </declare-styleable>
+
+    <declare-styleable name="MediaAutoDownloadPreference">
+        <attr name="transport" format="string" />
+    </declare-styleable>
 </resources>

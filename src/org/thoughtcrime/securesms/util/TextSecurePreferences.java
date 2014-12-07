@@ -63,6 +63,16 @@ public class TextSecurePreferences {
 
   private static final String PUSH_REGISTRATION_REMINDER_PREF  = "pref_push_registration_reminder";
   public  static final String REPEAT_ALERTS_PREF               = "pref_repeat_alerts";
+  
+  private static final String DATA_IMAGES_AUTO_DOWNLOAD_PREF   = "pref_data_images_autodownload";
+  private static final String DATA_AUDIO_AUTO_DOWNLOAD_PREF    = "pref_data_audio_autodownload";
+  private static final String DATA_VIDEO_AUTO_DOWNLOAD_PREF    = "pref_data_video_autodownload";
+  private static final String WIFI_IMAGES_AUTO_DOWNLOAD_PREF   = "pref_wifi_images_autodownload";
+  private static final String WIFI_AUDIO_AUTO_DOWNLOAD_PREF    = "pref_wifi_audio_autodownload";
+  private static final String WIFI_VIDEO_AUTO_DOWNLOAD_PREF    = "pref_wifi_video_autodownload";
+  private static final String ROAM_IMAGES_AUTO_DOWNLOAD_PREF   = "pref_roam_images_autodownload";
+  private static final String ROAM_AUDIO_AUTO_DOWNLOAD_PREF    = "pref_roam_audio_autodownload";
+  private static final String ROAM_VIDEO_AUTO_DOWNLOAD_PREF    = "pref_roam_video_autodownload";
 
   public static int getRepeatAlertsCount(Context context) {
     try {
@@ -130,6 +140,78 @@ public class TextSecurePreferences {
 
   public static void setDirectSmsAllowed(Context context, boolean allowed) {
     setBooleanPreference(context, DIRECT_SMS_ALLOWED_PREF, allowed);
+  }
+
+  public static boolean isDataImageAutoDownloadAllowed(Context context) {
+    return getBooleanPreference(context, DATA_IMAGES_AUTO_DOWNLOAD_PREF, true);
+  }
+
+  public static void setDataImageAutoDownloadAllowed(Context context, boolean allowed) {
+    setBooleanPreference(context, DATA_IMAGES_AUTO_DOWNLOAD_PREF, allowed);
+  }
+
+  public static boolean isDataAudioAutoDownloadAllowed(Context context) {
+    return getBooleanPreference(context, DATA_AUDIO_AUTO_DOWNLOAD_PREF, false);
+  }
+
+  public static void setDataAudioAutoDownloadAllowed(Context context, boolean allowed) {
+    setBooleanPreference(context, DATA_AUDIO_AUTO_DOWNLOAD_PREF, allowed);
+  }
+
+  public static boolean isDataVideoAutoDownloadAllowed(Context context) {
+    return getBooleanPreference(context, DATA_VIDEO_AUTO_DOWNLOAD_PREF, false);
+  }
+
+  public static void setDataVideoAutoDownloadAllowed(Context context, boolean allowed) {
+    setBooleanPreference(context, DATA_VIDEO_AUTO_DOWNLOAD_PREF, allowed);
+  }
+
+  public static boolean isWifiImageAutoDownloadAllowed(Context context) {
+    return getBooleanPreference(context, WIFI_IMAGES_AUTO_DOWNLOAD_PREF, true);
+  }
+
+  public static void setWifiImageAutoDownloadAllowed(Context context, boolean allowed) {
+    setBooleanPreference(context, WIFI_IMAGES_AUTO_DOWNLOAD_PREF, allowed);
+  }
+
+  public static boolean isWifiAudioAutoDownloadAllowed(Context context) {
+    return getBooleanPreference(context, WIFI_AUDIO_AUTO_DOWNLOAD_PREF, false);
+  }
+
+  public static void setWifiAudioAutoDownloadAllowed(Context context, boolean allowed) {
+    setBooleanPreference(context, WIFI_AUDIO_AUTO_DOWNLOAD_PREF, allowed);
+  }
+
+  public static boolean isWifiVideoAutoDownloadAllowed(Context context) {
+    return getBooleanPreference(context, WIFI_VIDEO_AUTO_DOWNLOAD_PREF, false);
+  }
+
+  public static void setWifiVideoAutoDownloadAllowed(Context context, boolean allowed) {
+    setBooleanPreference(context, WIFI_VIDEO_AUTO_DOWNLOAD_PREF, allowed);
+  }
+
+  public static boolean isRoamingImageAutoDownloadAllowed(Context context) {
+    return getBooleanPreference(context, ROAM_IMAGES_AUTO_DOWNLOAD_PREF, true);
+  }
+
+  public static void setRoamingImageAutoDownloadAllowed(Context context, boolean allowed) {
+    setBooleanPreference(context, ROAM_IMAGES_AUTO_DOWNLOAD_PREF, allowed);
+  }
+
+  public static boolean isRoamingAudioAutoDownloadAllowed(Context context) {
+    return getBooleanPreference(context, ROAM_AUDIO_AUTO_DOWNLOAD_PREF, false);
+  }
+
+  public static void setRoamingAudioAutoDownloadAllowed(Context context, boolean allowed) {
+    setBooleanPreference(context, ROAM_AUDIO_AUTO_DOWNLOAD_PREF, allowed);
+  }
+
+  public static boolean isRoamingVideoAutoDownloadAllowed(Context context) {
+    return getBooleanPreference(context, ROAM_VIDEO_AUTO_DOWNLOAD_PREF, false);
+  }
+
+  public static void setRoamingVideoAutoDownloadAllowed(Context context, boolean allowed) {
+    setBooleanPreference(context, ROAM_VIDEO_AUTO_DOWNLOAD_PREF, allowed);
   }
 
   public static int getLocalRegistrationId(Context context) {
