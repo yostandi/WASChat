@@ -193,11 +193,13 @@ public class ConversationItem extends LinearLayout {
       }
     }
 
-    downloadProgress.setProgress(0);
 
     Log.w(TAG, "registering for " + messageRecord.getId());
     if (!EventBus.getDefault().isRegistered(this)) {
       EventBus.getDefault().registerSticky(this);
+      if (EventBus.getDefault().getStickyEvent(TransferProgressEvent.class) == null && downloadProgress != null) {
+        downloadProgress.setProgress(0);
+      }
     }
   }
 
