@@ -12,6 +12,8 @@ import org.thoughtcrime.securesms.dependencies.InjectableType;
 import org.thoughtcrime.securesms.events.TransferProgressEvent;
 import org.thoughtcrime.securesms.jobs.requirements.MasterSecretRequirement;
 import org.thoughtcrime.securesms.util.Base64;
+import org.thoughtcrime.securesms.util.ConnectivityUtil;
+import org.thoughtcrime.securesms.util.TextSecurePreferences;
 import org.thoughtcrime.securesms.util.Util;
 import org.whispersystems.jobqueue.JobParameters;
 import org.whispersystems.jobqueue.requirements.NetworkRequirement;
@@ -89,9 +91,33 @@ public class AttachmentDownloadJob extends MasterSecretJob implements Injectable
     return false;
   }
 
+  private boolean shouldAutoDownload(PduPart part) {
+    final boolean wifi    = ConnectivityUtil.isWifiConnected(context);
+    final boolean roaming = ConnectivityUtil.isRoaming(context);
+
+    return ((part.isImage() &&
+              ((wifi    && TextSecurePreferences.isWifiImageAutoDownloadAllowed(context))     ||
+               (roaming && TextSecurePreferences.isRoamingImageAutoDownloadAllowed(context))) ||
+               (TextSecurePreferences.isDataImageAutoDownloadAllowed(context))) ||
+            (part.isAudio() &&
+              ((wifi    && TextSecurePreferences.isWifiAudioAutoDownloadAllowed(context))     ||
+               (roaming && TextSecurePreferences.isRoamingAudioAutoDownloadAllowed(context))) ||
+               (TextSecurePreferences.isDataAudioAutoDownloadAllowed(context))) ||
+            (part.isVideo() &&
+              ((wifi    && TextSecurePreferences.isWifiVideoAutoDownloadAllowed(context))     ||
+               (roaming && TextSecurePreferences.isRoamingVideoAutoDownloadAllowed(context))) ||
+               (TextSecurePreferences.isDataVideoAutoDownloadAllowed(context))));
+  }
+
   private void retrievePart(MasterSecret masterSecret, PduPart part, final long messageId, long partId)
       throws IOException
   {
+    Log.w(TAG, "retrieving part of type " + Util.toIsoString(part.getContentType()));
+
+    if (!shouldAutoDownload(part)) {
+      markPendingApproval(messageId, part, partId);
+      return;
+    }
     PartDatabase database       = DatabaseFactory.getPartDatabase(context);
     File         attachmentFile = null;
 
@@ -157,6 +183,16 @@ public class AttachmentDownloadJob extends MasterSecretJob implements Injectable
     } catch (MmsException e) {
       Log.w(TAG, e);
     }
+  }
+
+  private void markPendingApproval(long messageId, PduPart part, long partId) {
+    try {
+      PartDatabase database = DatabaseFactory.getPartDatabase(context);
+      database.updatePendingApprovalPart(messageId, partId, part);
+    } catch (MmsException e) {
+      Log.w(TAG, e);
+    }
+
   }
 
   private class InvalidPartException extends Exception {

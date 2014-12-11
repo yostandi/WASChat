@@ -704,6 +704,7 @@ public class DatabaseFactory {
         db.execSQL("ALTER TABLE part ADD COLUMN _thumbnail TEXT");
         db.execSQL("ALTER TABLE part ADD COLUMN data_size INTEGER");
         db.execSQL("ALTER TABLE part ADD COLUMN aspect_ratio REAL");
+        db.execSQL("ALTER TABLE part ADD COLUMN pending_approval INTEGER");
       }
 
       db.setTransactionSuccessful();

@@ -51,6 +51,15 @@ public class PduBody {
       return false;
     }
 
+    public boolean containsPushPendingApproval() {
+      for (int i=0;i<getPartsNum();i++) {
+        if (getPart(i).isPendingApproval()) {
+          return true;
+        }
+      }
+      return false;
+    }
+
     private void putPartToMaps(PduPart part) {
         // Put part to mPartMapByContentId.
         byte[] contentId = part.getContentId();

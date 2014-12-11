@@ -133,6 +133,7 @@ public class PduPart {
 
      private boolean isEncrypted;
      private boolean isPendingPush;
+     private boolean isPendingApproval;
      private Uri     thumbnailUri;
      private long    dataSize;
      
@@ -157,6 +158,14 @@ public class PduPart {
 
      public boolean isPendingPush() {
        return isPendingPush;
+     }
+
+     public void setPendingApproval(boolean isPendingApproval) {
+       this.isPendingApproval = isPendingApproval;
+     }
+
+     public boolean isPendingApproval() {
+       return isPendingApproval;
      }
 
      public void setThumbnailUri(Uri thumbnailUri) {

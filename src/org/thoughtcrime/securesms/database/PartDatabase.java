@@ -23,6 +23,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.graphics.Bitmap;
+import android.provider.Telephony.Mms;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
@@ -75,15 +76,16 @@ public class PartDatabase extends Database {
   private static final String THUMBNAIL               = "_thumbnail";
   private static final String SIZE                    = "data_size";
   private static final String ASPECT_RATIO            = "aspect_ratio";
+  private static final String PENDING_APPROVAL        = "pending_approval";
 
-  public static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME + " (" + ID + " INTEGER PRIMARY KEY, "              +
+  public static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME + " (" + ID + " INTEGER PRIMARY KEY, " +
     MMS_ID + " INTEGER, " + SEQUENCE + " INTEGER DEFAULT 0, "                        +
     CONTENT_TYPE + " TEXT, " + NAME + " TEXT, " + CHARSET + " INTEGER, "             +
     CONTENT_DISPOSITION + " TEXT, " + FILENAME + " TEXT, " + CONTENT_ID + " TEXT, "  +
     CONTENT_LOCATION + " TEXT, " + CONTENT_TYPE_START + " INTEGER, "                 +
     CONTENT_TYPE_TYPE + " TEXT, " + ENCRYPTED + " INTEGER, "                         +
     PENDING_PUSH_ATTACHMENT + " INTEGER, "+ DATA + " TEXT, " + THUMBNAIL + " TEXT, " +
-    SIZE + " INTEGER, " + ASPECT_RATIO + " REAL);";
+    SIZE + " INTEGER, " + ASPECT_RATIO + " REAL, " + PENDING_APPROVAL + " INTEGER);";
 
   public static final String[] CREATE_INDEXS = {
     "CREATE INDEX IF NOT EXISTS part_mms_id_index ON " + TABLE_NAME + " (" + MMS_ID + ");",
@@ -121,6 +123,21 @@ public class PartDatabase extends Database {
 
     part.setContentDisposition(new byte[0]);
     part.setPendingPush(false);
+
+    ContentValues values = getContentValuesForPart(part);
+
+    values.put(DATA, (String)null);
+
+    database.update(TABLE_NAME, values, ID_WHERE, new String[] {partId+""});
+    notifyConversationListeners(DatabaseFactory.getMmsDatabase(context).getThreadIdForMessage(messageId));
+  }
+
+  public void updatePendingApprovalPart(long messageId, long partId, PduPart part)
+      throws MmsException
+  {
+    SQLiteDatabase database = databaseHelper.getWritableDatabase();
+
+    part.setPendingApproval(true);
 
     ContentValues values = getContentValuesForPart(part);
 

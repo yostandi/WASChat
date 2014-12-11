@@ -101,5 +101,13 @@ public class SlideDeck {
 
     return false;
   }
-	
+
+  public boolean containsMediaSlidePendingApproval() {
+    for (Slide slide : slides) {
+      if (slide.getPart().isPendingApproval()) {
+        return true;
+      }
+    }
+    return false;
+  }
 }

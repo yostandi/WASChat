@@ -1069,7 +1069,7 @@ public class MmsDatabase extends Database implements MmsSmsColumns {
           PduBody      body         = getPartsAsBody(partDatabase.getParts(masterSecret, id, false));
           SlideDeck    slideDeck    = new SlideDeck(context, masterSecret, body);
 
-          if (!body.containsPushInProgress()) {
+          if (!body.containsPushInProgress() && !body.containsPushPendingApproval()) {
             slideCache.put(id, new SoftReference<SlideDeck>(slideDeck));
           }
 
