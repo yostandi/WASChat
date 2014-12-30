@@ -40,8 +40,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import ws.com.google.android.mms.ContentType;
 import ws.com.google.android.mms.MmsException;
@@ -85,6 +87,8 @@ public class PartDatabase extends Database {
     "CREATE INDEX IF NOT EXISTS pending_push_index ON " + TABLE_NAME + " (" + PENDING_PUSH_ATTACHMENT + ");",
   };
 
+  private final Set<Long> thumbnailTasks = new HashSet<>();
+
   public PartDatabase(Context context, SQLiteOpenHelper databaseHelper) {
     super(context, databaseHelper);
   }
@@ -93,12 +97,6 @@ public class PartDatabase extends Database {
       throws FileNotFoundException
   {
     return getDataStream(masterSecret, partId, DATA);
-  }
-
-  public InputStream getThumbnailStream(MasterSecret masterSecret, long partId)
-      throws FileNotFoundException
-  {
-    return getDataStream(masterSecret, partId, THUMBNAIL);
   }
 
   public void updateFailedDownloadedPart(long messageId, long partId, PduPart part)
@@ -205,6 +203,9 @@ public class PartDatabase extends Database {
   }
 
   private void getPartValues(PduPart part, Cursor cursor) {
+
+    part.setId(cursor.getLong(cursor.getColumnIndexOrThrow(ID)));
+
     int charsetColumn = cursor.getColumnIndexOrThrow(CHARSET);
 
     if (!cursor.isNull(charsetColumn))
@@ -249,12 +250,6 @@ public class PartDatabase extends Database {
 
     if (!cursor.isNull(pendingPushColumn))
       part.setPendingPush(cursor.getInt(pendingPushColumn) == 1);
-
-    int thumbnailColumn = cursor.getColumnIndexOrThrow(THUMBNAIL);
-
-    if (!cursor.isNull(thumbnailColumn))
-      part.setThumbnailUri(ContentUris.withAppendedId(PartAuthority.THUMB_CONTENT_URI,
-                                                      cursor.getLong(cursor.getColumnIndexOrThrow(ID))));
 
     int sizeColumn = cursor.getColumnIndexOrThrow(SIZE);
 
@@ -332,7 +327,7 @@ public class PartDatabase extends Database {
 
       if (cursor != null && cursor.moveToFirst()) {
         if (cursor.isNull(0)) {
-          throw new FileNotFoundException("No part data for id: " + partId);
+          return null;
         }
 
         return getPartInputStream(masterSecret, new File(cursor.getString(0)));
@@ -379,13 +374,52 @@ public class PartDatabase extends Database {
     }
   }
 
+  private void waitForThumbnailTask(long partId) {
+    Log.w(TAG, "waiting on thumbnail task for " + partId);
+    while (thumbnailTasks.contains(partId)) {
+      try {
+        thumbnailTasks.wait();
+      } catch (InterruptedException ie) {
+        throw new AssertionError("thread interrupted");
+      }
+    }
+  }
+
+  public InputStream getThumbnailStream(MasterSecret masterSecret, long partId) throws FileNotFoundException {
+    Log.w(TAG, "getThumbnailStream(" + partId + ")");
+    InputStream dataStream = getDataStream(masterSecret, partId, THUMBNAIL);
+    if (dataStream != null) {
+      return dataStream;
+    }
+
+    synchronized (thumbnailTasks) {
+      InputStream stream = getDataStream(masterSecret, partId, THUMBNAIL);
+      if (stream != null) {
+        return stream;
+      }
+
+      if (!thumbnailTasks.contains(partId)) {
+        try {
+          ThumbnailGenerateJob job = new ThumbnailGenerateJob(context, partId);
+          job.onAdded();
+          job.onRun(masterSecret);
+        } catch (MmsException | IOException e) {
+          Log.w(TAG, e);
+          throw new FileNotFoundException(e.getMessage());
+        }
+      }
+      waitForThumbnailTask(partId);
+    }
+
+    return getDataStream(masterSecret, partId, THUMBNAIL);
+  }
+
   private PduPart getPart(Cursor cursor) {
     PduPart part   = new PduPart();
-    long    partId = cursor.getLong(cursor.getColumnIndexOrThrow(ID));
 
     getPartValues(part, cursor);
 
-    part.setDataUri(ContentUris.withAppendedId(PartAuthority.PART_CONTENT_URI, partId));
+    part.setDataUri(ContentUris.withAppendedId(PartAuthority.PART_CONTENT_URI, part.getId()));
 
     return part;
   }
@@ -432,7 +466,7 @@ public class PartDatabase extends Database {
       values.put(SIZE, partData.second);
     }
 
-    database.update(TABLE_NAME, values, ID_WHERE, new String[] {partId+""});
+    database.update(TABLE_NAME, values, ID_WHERE, new String[]{partId+""});
 
     ApplicationContext.getInstance(context).getJobManager().add(new ThumbnailGenerateJob(context, partId));
 
@@ -452,6 +486,19 @@ public class PartDatabase extends Database {
     values.put(THUMBNAIL, thumbnailFile.first.getAbsolutePath());
     values.put(ASPECT_RATIO, aspectRatio);
 
-    database.update(TABLE_NAME, values, ID_WHERE, new String[] {partId + ""});
+    database.update(TABLE_NAME, values, ID_WHERE, new String[]{partId+""});
+  }
+
+  public void markThumbnailTaskStarted(long partId) {
+    synchronized (thumbnailTasks) {
+      thumbnailTasks.add(partId);
+    }
+  }
+
+  public void markThumbnailTaskEnded(long partId) {
+    synchronized (thumbnailTasks) {
+      thumbnailTasks.remove(partId);
+      thumbnailTasks.notifyAll();
+    }
   }
 }

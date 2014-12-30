@@ -31,6 +31,7 @@ import android.util.Log;
 import android.widget.ImageView;
 
 import org.thoughtcrime.securesms.R;
+import org.thoughtcrime.securesms.database.DatabaseFactory;
 import org.thoughtcrime.securesms.database.MmsDatabase;
 import org.thoughtcrime.securesms.util.BitmapDecodingException;
 import org.thoughtcrime.securesms.util.BitmapUtil;
@@ -43,6 +44,7 @@ import org.thoughtcrime.securesms.crypto.MasterSecret;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.util.Collections;
@@ -81,9 +83,16 @@ public class ImageSlide extends Slide {
     try {
       Bitmap thumbnailBitmap;
       long startDecode = System.currentTimeMillis();
-      Log.w(TAG, (part.getThumbnailUri() == null ? "generating" : "fetching pre-generated") + " thumbnail");
-      if (part.getThumbnailUri() != null) thumbnailBitmap = BitmapFactory.decodeStream(PartAuthority.getPartStream(context, masterSecret, part.getThumbnailUri()));
-      else                                thumbnailBitmap = BitmapUtil.createScaledBitmap(context, masterSecret, getUri(), maxWidth, maxHeight);
+
+      if (part.getDataUri() != null && part.getId() > -1) {
+        thumbnailBitmap = BitmapFactory.decodeStream(DatabaseFactory.getPartDatabase(context)
+                                                                    .getThumbnailStream(masterSecret, part.getId()));
+      } else if (part.getDataUri() != null) {
+        Log.w(TAG, "generating thumbnail from non-local data uri");
+        thumbnailBitmap = BitmapUtil.createScaledBitmap(context, masterSecret, part.getDataUri(), maxWidth, maxHeight);
+      } else {
+        throw new FileNotFoundException("no data location specified");
+      }
 
       Log.w(TAG, "thumbnail decode/generate time: " + (System.currentTimeMillis() - startDecode) + "ms");
 
@@ -91,11 +100,8 @@ public class ImageSlide extends Slide {
       thumbnailCache.put(part.getDataUri(), new SoftReference<>(thumbnail));
 
       return thumbnail;
-    } catch (FileNotFoundException e) {
-      Log.w("ImageSlide", e);
-      return context.getResources().getDrawable(R.drawable.ic_missing_thumbnail_picture);
-    } catch (BitmapDecodingException e) {
-      Log.w("ImageSlide", e);
+    } catch (FileNotFoundException | BitmapDecodingException e) {
+      Log.w(TAG, e);
       return context.getResources().getDrawable(R.drawable.ic_missing_thumbnail_picture);
     }
   }
