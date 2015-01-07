@@ -124,6 +124,14 @@ public class Util {
     }
   }
 
+  public static void wait(Object lock) {
+    try {
+      lock.wait();
+    } catch (InterruptedException ie) {
+      throw new AssertionError(ie);
+    }
+  }
+
   public static void wait(Object lock, int timeout) {
     try {
       lock.wait(timeout);

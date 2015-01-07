@@ -21,6 +21,7 @@ import android.content.Context;
 
 import org.thoughtcrime.securesms.crypto.PRNGFixes;
 import org.thoughtcrime.securesms.dependencies.AxolotlStorageModule;
+import org.thoughtcrime.securesms.dependencies.DatabaseModule;
 import org.thoughtcrime.securesms.dependencies.InjectableType;
 import org.thoughtcrime.securesms.dependencies.TextSecureCommunicationModule;
 import org.thoughtcrime.securesms.jobs.GcmRefreshJob;
@@ -92,7 +93,8 @@ public class ApplicationContext extends Application implements DependencyInjecto
 
   private void initializeDependencyInjection() {
     this.objectGraph = ObjectGraph.create(new TextSecureCommunicationModule(this),
-                                          new AxolotlStorageModule(this));
+                                          new AxolotlStorageModule(this),
+                                          new DatabaseModule(this));
   }
 
   private void initializeGcmCheck() {

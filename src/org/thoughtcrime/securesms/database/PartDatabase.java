@@ -33,6 +33,7 @@ import org.thoughtcrime.securesms.crypto.MasterSecret;
 import org.thoughtcrime.securesms.jobs.ThumbnailGenerateJob;
 import org.thoughtcrime.securesms.mms.PartAuthority;
 import org.thoughtcrime.securesms.util.Util;
+import org.thoughtcrime.securesms.util.VisibleForTesting;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -315,7 +316,7 @@ public class PartDatabase extends Database {
     return new EncryptingPartOutputStream(path, masterSecret);
   }
 
-  private InputStream getDataStream(MasterSecret masterSecret, long partId, String dataType)
+  @VisibleForTesting InputStream getDataStream(MasterSecret masterSecret, long partId, String dataType)
       throws FileNotFoundException
   {
     SQLiteDatabase database = databaseHelper.getReadableDatabase();
@@ -374,15 +375,8 @@ public class PartDatabase extends Database {
     }
   }
 
-  private void waitForThumbnailTask(long partId) {
-    Log.w(TAG, "waiting on thumbnail task for " + partId);
-    while (thumbnailTasks.contains(partId)) {
-      try {
-        thumbnailTasks.wait();
-      } catch (InterruptedException ie) {
-        throw new AssertionError("thread interrupted");
-      }
-    }
+  @VisibleForTesting ThumbnailGenerateJob getThumbnailGenerateJob(long partId) {
+    return new ThumbnailGenerateJob(context, partId);
   }
 
   public InputStream getThumbnailStream(MasterSecret masterSecret, long partId) throws FileNotFoundException {
@@ -392,23 +386,26 @@ public class PartDatabase extends Database {
       return dataStream;
     }
 
-    synchronized (thumbnailTasks) {
+    synchronized (getThumbnailTasks()) {
       InputStream stream = getDataStream(masterSecret, partId, THUMBNAIL);
       if (stream != null) {
         return stream;
       }
 
-      if (!thumbnailTasks.contains(partId)) {
+      if (!getThumbnailTasks().contains(partId)) {
         try {
-          ThumbnailGenerateJob job = new ThumbnailGenerateJob(context, partId);
+          ThumbnailGenerateJob job = getThumbnailGenerateJob(partId);
           job.onAdded();
           job.onRun(masterSecret);
         } catch (MmsException | IOException e) {
           Log.w(TAG, e);
           throw new FileNotFoundException(e.getMessage());
         }
+      } else {
+        while (getThumbnailTasks().contains(partId)) {
+          Util.wait(getThumbnailTasks());
+        }
       }
-      waitForThumbnailTask(partId);
     }
 
     return getDataStream(masterSecret, partId, THUMBNAIL);
@@ -489,16 +486,20 @@ public class PartDatabase extends Database {
     database.update(TABLE_NAME, values, ID_WHERE, new String[]{partId+""});
   }
 
+  @VisibleForTesting Set<Long> getThumbnailTasks() {
+    return thumbnailTasks;
+  }
+
   public void markThumbnailTaskStarted(long partId) {
-    synchronized (thumbnailTasks) {
-      thumbnailTasks.add(partId);
+    synchronized (getThumbnailTasks()) {
+      getThumbnailTasks().add(partId);
     }
   }
 
   public void markThumbnailTaskEnded(long partId) {
-    synchronized (thumbnailTasks) {
-      thumbnailTasks.remove(partId);
-      thumbnailTasks.notifyAll();
+    synchronized (getThumbnailTasks()) {
+      getThumbnailTasks().remove(partId);
+      getThumbnailTasks().notifyAll();
     }
   }
 }

@@ -9,6 +9,7 @@ import org.thoughtcrime.securesms.R;
 import org.thoughtcrime.securesms.crypto.MasterSecret;
 import org.thoughtcrime.securesms.database.DatabaseFactory;
 import org.thoughtcrime.securesms.database.PartDatabase;
+import org.thoughtcrime.securesms.dependencies.InjectableType;
 import org.thoughtcrime.securesms.jobs.requirements.MasterSecretRequirement;
 import org.thoughtcrime.securesms.util.BitmapDecodingException;
 import org.thoughtcrime.securesms.util.BitmapUtil;
@@ -20,14 +21,17 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+import javax.inject.Inject;
+
 import ws.com.google.android.mms.ContentType;
 import ws.com.google.android.mms.MmsException;
 import ws.com.google.android.mms.pdu.PduPart;
 
-public class ThumbnailGenerateJob extends MasterSecretJob {
+public class ThumbnailGenerateJob extends MasterSecretJob implements InjectableType {
 
   private static final String TAG = ThumbnailGenerateJob.class.getSimpleName();
 
+  @Inject transient PartDatabase partDatabase;
   private final long partId;
 
   public ThumbnailGenerateJob(Context context, long partId) {
@@ -40,14 +44,13 @@ public class ThumbnailGenerateJob extends MasterSecretJob {
 
   @Override
   public void onAdded() {
-    DatabaseFactory.getPartDatabase(context).markThumbnailTaskStarted(partId);
+    partDatabase.markThumbnailTaskStarted(partId);
   }
 
   @Override
   public void onRun(MasterSecret masterSecret) throws IOException, OutOfMemoryError, MmsException {
-    PartDatabase database = DatabaseFactory.getPartDatabase(context);
     try {
-      PduPart part        = database.getPart(partId);
+      PduPart part        = partDatabase.getPart(partId);
       long    startMillis = System.currentTimeMillis();
       Bitmap  thumbnail   = generateThumbnailForPart(masterSecret, part);
 
@@ -64,14 +67,14 @@ public class ThumbnailGenerateJob extends MasterSecretJob {
 
         thumbnail.recycle();
 
-        database.updatePartThumbnail(masterSecret, partId, part, new ByteArrayInputStream(thumbnailBytes.toByteArray()), aspectRatio);
+        partDatabase.updatePartThumbnail(masterSecret, partId, part, new ByteArrayInputStream(thumbnailBytes.toByteArray()), aspectRatio);
       } else {
         Log.w(TAG, "media doesn't have thumbnail support, skipping.");
       }
     } catch (BitmapDecodingException bde) {
       throw new IOException(bde);
     } finally {
-      database.markThumbnailTaskEnded(partId);
+      partDatabase.markThumbnailTaskEnded(partId);
     }
   }
 
