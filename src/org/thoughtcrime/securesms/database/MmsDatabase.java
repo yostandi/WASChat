@@ -21,6 +21,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
@@ -52,7 +53,6 @@ import org.thoughtcrime.securesms.util.GroupUtil;
 import org.thoughtcrime.securesms.util.LRUCache;
 import org.thoughtcrime.securesms.util.ListenableFutureTask;
 import org.thoughtcrime.securesms.util.TextSecurePreferences;
-import org.thoughtcrime.securesms.util.Trimmer;
 import org.thoughtcrime.securesms.util.Util;
 import org.whispersystems.jobqueue.JobManager;
 import org.whispersystems.libaxolotl.InvalidMessageException;
@@ -527,7 +527,7 @@ public class MmsDatabase extends Database implements MmsSmsColumns {
       contentValues.put(DATE_RECEIVED, contentValues.getAsLong(DATE_SENT));
 
       return insertMediaMessage(masterSecret, request.getPduHeaders(),
-                                request.getBody(), contentValues);
+                                request.getBody(), contentValues, null);
     } catch (NoSuchMessageException e) {
       throw new MmsException(e);
     }
@@ -564,7 +564,7 @@ public class MmsDatabase extends Database implements MmsSmsColumns {
     }
 
     long messageId = insertMediaMessage(masterSecret, retrieved.getPduHeaders(),
-                                        retrieved.getBody(), contentValues);
+                                        retrieved.getBody(), contentValues, null);
 
     if (unread) {
       DatabaseFactory.getThreadDatabase(context).setUnread(threadId);
@@ -695,7 +695,7 @@ public class MmsDatabase extends Database implements MmsSmsColumns {
     contentValues.remove(ADDRESS);
 
     long messageId = insertMediaMessage(masterSecret, sendRequest.getPduHeaders(),
-                                        sendRequest.getBody(), contentValues);
+                                        sendRequest.getBody(), contentValues, message.getThumbnailMap());
     jobManager.add(new TrimThreadJob(context, threadId));
 
     return messageId;
@@ -704,7 +704,8 @@ public class MmsDatabase extends Database implements MmsSmsColumns {
   private long insertMediaMessage(MasterSecret masterSecret,
                                   PduHeaders headers,
                                   PduBody body,
-                                  ContentValues contentValues)
+                                  ContentValues contentValues,
+                                  Map<PduPart, Bitmap> thumbnailMap)
       throws MmsException
   {
     SQLiteDatabase     db              = databaseHelper.getWritableDatabase();
@@ -713,7 +714,7 @@ public class MmsDatabase extends Database implements MmsSmsColumns {
 
     if (Types.isSymmetricEncryption(contentValues.getAsLong(MESSAGE_BOX))) {
       String messageText = PartParser.getMessageText(body);
-      body               = PartParser.getNonTextParts(body);
+      body               = PartParser.getDisplayableParts(body);
 
       if (!TextUtils.isEmpty(messageText)) {
         contentValues.put(BODY, new MasterCipher(masterSecret).encryptBody(messageText));
@@ -725,7 +726,7 @@ public class MmsDatabase extends Database implements MmsSmsColumns {
     long messageId = db.insert(TABLE_NAME, null, contentValues);
 
     addressDatabase.insertAddressesForId(messageId, headers);
-    partsDatabase.insertParts(masterSecret, messageId, body);
+    partsDatabase.insertParts(masterSecret, messageId, body, thumbnailMap);
 
     notifyConversationListeners(contentValues.getAsLong(THREAD_ID));
     DatabaseFactory.getThreadDatabase(context).update(contentValues.getAsLong(THREAD_ID));

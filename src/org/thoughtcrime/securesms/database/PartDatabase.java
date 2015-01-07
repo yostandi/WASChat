@@ -22,6 +22,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.graphics.Bitmap;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
@@ -32,6 +33,9 @@ import org.thoughtcrime.securesms.crypto.EncryptingPartOutputStream;
 import org.thoughtcrime.securesms.crypto.MasterSecret;
 import org.thoughtcrime.securesms.jobs.ThumbnailGenerateJob;
 import org.thoughtcrime.securesms.mms.PartAuthority;
+import org.thoughtcrime.securesms.util.BitmapDecodingException;
+import org.thoughtcrime.securesms.util.BitmapUtil;
+import org.thoughtcrime.securesms.util.MediaUtil;
 import org.thoughtcrime.securesms.util.Util;
 import org.thoughtcrime.securesms.util.VisibleForTesting;
 
@@ -44,6 +48,7 @@ import java.io.OutputStream;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import ws.com.google.android.mms.ContentType;
@@ -196,9 +201,11 @@ public class PartDatabase extends Database {
     }
   }
 
-  void insertParts(MasterSecret masterSecret, long mmsId, PduBody body) throws MmsException {
+  void insertParts(MasterSecret masterSecret, long mmsId, PduBody body, Map<PduPart, Bitmap> thumbnailMap) throws MmsException {
     for (int i=0;i<body.getPartsNum();i++) {
-      long partId = insertPart(masterSecret, body.getPart(i), mmsId);
+      PduPart part = body.getPart(i);
+      Bitmap thumbnail = (thumbnailMap != null) ? thumbnailMap.get(part) : null;
+      long partId = insertPart(masterSecret, part, mmsId, thumbnail);
       Log.w(TAG, "Inserted part at ID: " + partId);
     }
   }
@@ -379,6 +386,52 @@ public class PartDatabase extends Database {
     return new ThumbnailGenerateJob(context, partId);
   }
 
+  @VisibleForTesting boolean isThumbnailInDatabase(long partId) throws FileNotFoundException {
+    SQLiteDatabase database = databaseHelper.getReadableDatabase();
+    Cursor         cursor   = null;
+
+    try {
+      cursor = database.query(TABLE_NAME, new String[]{THUMBNAIL}, ID_WHERE,
+                              new String[] {partId+""}, null, null, null);
+
+      if (cursor != null && cursor.moveToFirst()) {
+        return (!cursor.isNull(0));
+      } else {
+        throw new FileNotFoundException("No part for id: " + partId);
+      }
+    } finally {
+      if (cursor != null)
+        cursor.close();
+    }
+  }
+
+  public void generatePartThumbnail(MasterSecret masterSecret, long partId) throws IOException, MmsException {
+    try {
+      Log.w(TAG, "generatePartThumbnail()");
+      PduPart part        = getPart(partId);
+      long    startMillis = System.currentTimeMillis();
+      Bitmap  thumbnail   = MediaUtil.generateThumbnail(context, masterSecret, part.getDataUri(), Util.toIsoString(part.getContentType()));
+
+      if (thumbnail == null) {
+        Log.w(TAG, "media doesn't have thumbnail support, skipping.");
+        return;
+      }
+
+      InputStream jpegStream  = BitmapUtil.toCompressedJpeg(thumbnail);
+      float       aspectRatio = (float) thumbnail.getWidth() / (float) thumbnail.getHeight();
+
+      Log.w(TAG, String.format("generated thumbnail for part #%d, %dx%d (%.3f:1) in %dms",
+                               part.getId(), thumbnail.getWidth(), thumbnail.getHeight(),
+                               aspectRatio, System.currentTimeMillis() - startMillis));
+
+      thumbnail.recycle();
+
+      updatePartThumbnail(masterSecret, partId, part, jpegStream, aspectRatio);
+    } catch (BitmapDecodingException bde) {
+      throw new IOException(bde);
+    }
+  }
+
   public InputStream getThumbnailStream(MasterSecret masterSecret, long partId) throws FileNotFoundException {
     Log.w(TAG, "getThumbnailStream(" + partId + ")");
     InputStream dataStream = getDataStream(masterSecret, partId, THUMBNAIL);
@@ -386,24 +439,31 @@ public class PartDatabase extends Database {
       return dataStream;
     }
 
-    synchronized (getThumbnailTasks()) {
+    boolean generateNow = false;
+    synchronized (thumbnailTasks) {
       InputStream stream = getDataStream(masterSecret, partId, THUMBNAIL);
       if (stream != null) {
         return stream;
       }
+      if (!thumbnailTasks.contains(partId)) {
+        markThumbnailTaskStarted(partId);
+        generateNow = true;
+      }
+    }
 
-      if (!getThumbnailTasks().contains(partId)) {
-        try {
-          ThumbnailGenerateJob job = getThumbnailGenerateJob(partId);
-          job.onAdded();
-          job.onRun(masterSecret);
-        } catch (MmsException | IOException e) {
-          Log.w(TAG, e);
-          throw new FileNotFoundException(e.getMessage());
-        }
-      } else {
-        while (getThumbnailTasks().contains(partId)) {
-          Util.wait(getThumbnailTasks());
+    if (generateNow) {
+      Log.w(TAG, "generating thumbnail on-the-fly");
+      try {
+        generatePartThumbnail(masterSecret, partId);
+      } catch (MmsException | IOException e) {
+        Log.w(TAG, e);
+        throw new FileNotFoundException(e.getMessage());
+      }
+      markThumbnailTaskEnded(partId);
+    } else {
+      while (thumbnailTasks.contains(partId)) {
+        synchronized (thumbnailTasks) {
+          Util.wait(thumbnailTasks);
         }
       }
     }
@@ -421,7 +481,7 @@ public class PartDatabase extends Database {
     return part;
   }
 
-  private long insertPart(MasterSecret masterSecret, PduPart part, long mmsId) throws MmsException {
+  private long insertPart(MasterSecret masterSecret, PduPart part, long mmsId, Bitmap thumbnail) throws MmsException {
     Log.w(TAG, "inserting part to mms " + mmsId);
     SQLiteDatabase   database = databaseHelper.getWritableDatabase();
     Pair<File, Long> partData = null;
@@ -441,7 +501,14 @@ public class PartDatabase extends Database {
 
     long partId = database.insert(TABLE_NAME, null, contentValues);
 
-    ApplicationContext.getInstance(context).getJobManager().add(new ThumbnailGenerateJob(context, partId));
+    if (thumbnail != null) {
+      Log.w(TAG, "inserting pre-generated thumbnail");
+      InputStream jpegStream  = BitmapUtil.toCompressedJpeg(thumbnail);
+      float       aspectRatio = (float) thumbnail.getWidth() / (float) thumbnail.getHeight();
+      updatePartThumbnail(masterSecret, partId, part, jpegStream, aspectRatio);
+    } else if (!part.isPendingPush()) {
+      ApplicationContext.getInstance(context).getJobManager().add(getThumbnailGenerateJob(partId));
+    }
 
     return partId;
   }
@@ -465,7 +532,7 @@ public class PartDatabase extends Database {
 
     database.update(TABLE_NAME, values, ID_WHERE, new String[]{partId+""});
 
-    ApplicationContext.getInstance(context).getJobManager().add(new ThumbnailGenerateJob(context, partId));
+    ApplicationContext.getInstance(context).getJobManager().add(getThumbnailGenerateJob(partId));
 
     notifyConversationListeners(DatabaseFactory.getMmsDatabase(context).getThreadIdForMessage(messageId));
   }
@@ -486,20 +553,28 @@ public class PartDatabase extends Database {
     database.update(TABLE_NAME, values, ID_WHERE, new String[]{partId+""});
   }
 
-  @VisibleForTesting Set<Long> getThumbnailTasks() {
-    return thumbnailTasks;
+  public void markThumbnailTaskStarted(long partId) {
+    synchronized (thumbnailTasks) {
+      thumbnailTasks.add(partId);
+    }
   }
 
-  public void markThumbnailTaskStarted(long partId) {
-    synchronized (getThumbnailTasks()) {
-      getThumbnailTasks().add(partId);
+  public boolean markThumbnailTaskStartedIfAbsent(long partId) throws FileNotFoundException {
+    if (isThumbnailInDatabase(partId)) return false;
+
+    synchronized (thumbnailTasks) {
+      if (!isThumbnailInDatabase(partId) && !thumbnailTasks.contains(partId)) {
+        markThumbnailTaskStarted(partId);
+        return true;
+      }
+      return false;
     }
   }
 
   public void markThumbnailTaskEnded(long partId) {
-    synchronized (getThumbnailTasks()) {
-      getThumbnailTasks().remove(partId);
-      getThumbnailTasks().notifyAll();
+    synchronized (thumbnailTasks) {
+      thumbnailTasks.remove(partId);
+      thumbnailTasks.notifyAll();
     }
   }
 }
