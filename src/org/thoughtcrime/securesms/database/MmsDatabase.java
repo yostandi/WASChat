@@ -714,14 +714,14 @@ public class MmsDatabase extends Database implements MmsSmsColumns {
 
     if (Types.isSymmetricEncryption(contentValues.getAsLong(MESSAGE_BOX))) {
       String messageText = PartParser.getMessageText(body);
-      body               = PartParser.getDisplayableParts(body);
+      body               = PartParser.getSupportedMediaParts(body);
 
       if (!TextUtils.isEmpty(messageText)) {
         contentValues.put(BODY, new MasterCipher(masterSecret).encryptBody(messageText));
       }
     }
 
-    contentValues.put(PART_COUNT, PartParser.getDisplayablePartCount(body));
+    contentValues.put(PART_COUNT, PartParser.getSupportedMediaPartCount(body));
 
     long messageId = db.insert(TABLE_NAME, null, contentValues);
 

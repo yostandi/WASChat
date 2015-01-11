@@ -37,7 +37,7 @@ public class PartParser {
     return bodyText;
   }
 
-  public static PduBody getDisplayableParts(PduBody body) {
+  public static PduBody getSupportedMediaParts(PduBody body) {
     PduBody stripped = new PduBody();
 
     for (int i=0;i<body.getPartsNum();i++) {
@@ -49,7 +49,7 @@ public class PartParser {
     return stripped;
   }
 
-  public static int getDisplayablePartCount(PduBody body) {
+  public static int getSupportedMediaPartCount(PduBody body) {
     int partCount = 0;
 
     for (int i=0;i<body.getPartsNum();i++) {
