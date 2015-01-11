@@ -527,7 +527,7 @@ public class MmsDatabase extends Database implements MmsSmsColumns {
       contentValues.put(DATE_RECEIVED, contentValues.getAsLong(DATE_SENT));
 
       return insertMediaMessage(masterSecret, request.getPduHeaders(),
-                                request.getBody(), contentValues, null);
+                                request.getBody(), contentValues);
     } catch (NoSuchMessageException e) {
       throw new MmsException(e);
     }
@@ -564,7 +564,7 @@ public class MmsDatabase extends Database implements MmsSmsColumns {
     }
 
     long messageId = insertMediaMessage(masterSecret, retrieved.getPduHeaders(),
-                                        retrieved.getBody(), contentValues, null);
+                                        retrieved.getBody(), contentValues);
 
     if (unread) {
       DatabaseFactory.getThreadDatabase(context).setUnread(threadId);
@@ -695,7 +695,7 @@ public class MmsDatabase extends Database implements MmsSmsColumns {
     contentValues.remove(ADDRESS);
 
     long messageId = insertMediaMessage(masterSecret, sendRequest.getPduHeaders(),
-                                        sendRequest.getBody(), contentValues, message.getThumbnailMap());
+                                        sendRequest.getBody(), contentValues);
     jobManager.add(new TrimThreadJob(context, threadId));
 
     return messageId;
@@ -704,8 +704,7 @@ public class MmsDatabase extends Database implements MmsSmsColumns {
   private long insertMediaMessage(MasterSecret masterSecret,
                                   PduHeaders headers,
                                   PduBody body,
-                                  ContentValues contentValues,
-                                  Map<PduPart, Bitmap> thumbnailMap)
+                                  ContentValues contentValues)
       throws MmsException
   {
     SQLiteDatabase     db              = databaseHelper.getWritableDatabase();
@@ -726,7 +725,7 @@ public class MmsDatabase extends Database implements MmsSmsColumns {
     long messageId = db.insert(TABLE_NAME, null, contentValues);
 
     addressDatabase.insertAddressesForId(messageId, headers);
-    partsDatabase.insertParts(masterSecret, messageId, body, thumbnailMap);
+    partsDatabase.insertParts(masterSecret, messageId, body);
 
     notifyConversationListeners(contentValues.getAsLong(THREAD_ID));
     DatabaseFactory.getThreadDatabase(context).update(contentValues.getAsLong(THREAD_ID));

@@ -109,9 +109,16 @@ android {
         buildTypes {
             debug {
                 minifyEnabled false
+
             }
             release {
                 minifyEnabled false
+            }
+        }
+
+        productFlavors {
+            sushi {
+                applicationId "org.thoughtcrime.securesms.sushi"
             }
         }
 
@@ -125,6 +132,11 @@ android {
                 res.srcDirs = ['res']
                 assets.srcDirs = ['assets']
             }
+
+            sushi {
+                res.srcDir 'variants/debug/res'
+            }
+
             androidTest {
                 java.srcDirs = ['androidTest/java']
                 resources.srcDirs = ['androidTest/java']

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.test.AndroidTestCase;
 import android.test.InstrumentationTestCase;
+import android.util.Pair;
 
 import org.thoughtcrime.securesms.crypto.MasterSecret;
 import org.thoughtcrime.securesms.jobs.ThumbnailGenerateJob;
@@ -19,6 +20,7 @@ import dagger.Provides;
 import ws.com.google.android.mms.pdu.PduPart;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyFloat;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.eq;
@@ -46,11 +48,11 @@ public class PartDatabaseTest extends InstrumentationTestCase {
   public void testTaskNotRunWhenThumbnailExists() throws Exception {
     ThumbnailGenerateJob job = getThumbnailGenerateJob(getInstrumentation().getTargetContext(), database);
     when(database.getPart(eq(PART_ID))).thenReturn(getPduPartSkeleton("x/x"));
-    doReturn(true).when(database).isThumbnailInDatabase(anyLong());
+    doReturn(new Pair<>(mock(InputStream.class), false)).when(database)
+                                                        .getThumbnailStreamOrLock(any(MasterSecret.class), anyLong(), anyBoolean());
 
     job.onRun(null);
 
-    verify(database, never()).generatePartThumbnail(any(MasterSecret.class), anyLong());
     verify(database, never()).updatePartThumbnail(any(MasterSecret.class), anyLong(), any(PduPart.class), any(InputStream.class), anyFloat());
     verify(database, never()).markThumbnailTaskEnded(eq(PART_ID));
   }
@@ -58,7 +60,7 @@ public class PartDatabaseTest extends InstrumentationTestCase {
   public void testTaskResizesImage() throws Exception {
     ThumbnailGenerateJob job = getThumbnailGenerateJob(getInstrumentation().getTargetContext(), database);
     doReturn(getPduPartSkeleton("image/png")).when(database).getPart(PART_ID);
-    doReturn(true).when(database).markThumbnailTaskStartedIfAbsent(PART_ID);
+    doReturn(new Pair<>(null, true)).when(database).getThumbnailStreamOrLock(any(MasterSecret.class), anyLong(), anyBoolean());
 
     try {
       job.onRun(null);
@@ -67,7 +69,7 @@ public class PartDatabaseTest extends InstrumentationTestCase {
       // success
     }
 
-    verify(database, times(1)).markThumbnailTaskStartedIfAbsent(eq(PART_ID));
+    verify(database, times(1)).updatePartThumbnail(any(MasterSecret.class), eq(PART_ID), any(PduPart.class), any(InputStream.class), anyFloat());
     verify(database, times(1)).markThumbnailTaskEnded(eq(PART_ID));
   }
 

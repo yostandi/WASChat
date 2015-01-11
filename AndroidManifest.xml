@@ -284,7 +284,7 @@
 
     <provider android:name=".providers.PartProvider"
               android:grantUriPermissions="true"
-              android:authorities="org.thoughtcrime.provider.securesms" />
+              android:authorities=".provider.securesms" />
 
     <receiver android:name=".service.RegistrationNotifier"
               android:exported="false">

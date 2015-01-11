@@ -87,17 +87,6 @@ public class SlideDeck {
     return body;
   }
 
-  public Map<PduPart, Bitmap> getThumbnailMap() {
-    Map<PduPart, Bitmap> thumbnailMap = new HashMap<>();
-    for (Slide slide : slides) {
-      Bitmap thumbnail = slide.getGeneratedThumbnail();
-      if (thumbnail != null) {
-        thumbnailMap.put(slide.getPart(), thumbnail);
-      }
-    }
-    return thumbnailMap;
-  }
-
   public void addSlide(Slide slide) {
     slides.add(slide);
   }

@@ -36,6 +36,7 @@ import org.thoughtcrime.securesms.mms.PartAuthority;
 import org.thoughtcrime.securesms.util.BitmapDecodingException;
 import org.thoughtcrime.securesms.util.BitmapUtil;
 import org.thoughtcrime.securesms.util.MediaUtil;
+import org.thoughtcrime.securesms.util.MediaUtil.ThumbnailData;
 import org.thoughtcrime.securesms.util.Util;
 import org.thoughtcrime.securesms.util.VisibleForTesting;
 
@@ -201,11 +202,10 @@ public class PartDatabase extends Database {
     }
   }
 
-  void insertParts(MasterSecret masterSecret, long mmsId, PduBody body, Map<PduPart, Bitmap> thumbnailMap) throws MmsException {
+  void insertParts(MasterSecret masterSecret, long mmsId, PduBody body) throws MmsException {
     for (int i=0;i<body.getPartsNum();i++) {
       PduPart part = body.getPart(i);
-      Bitmap thumbnail = (thumbnailMap != null) ? thumbnailMap.get(part) : null;
-      long partId = insertPart(masterSecret, part, mmsId, thumbnail);
+      long partId = insertPart(masterSecret, part, mmsId, part.getThumbnail());
       Log.w(TAG, "Inserted part at ID: " + partId);
     }
   }
@@ -377,7 +377,7 @@ public class PartDatabase extends Database {
       } else {
         throw new MmsException("Part is empty!");
       }
-    } catch (FileNotFoundException e) {
+    } catch (IOException e) {
       throw new MmsException(e);
     }
   }
@@ -386,88 +386,20 @@ public class PartDatabase extends Database {
     return new ThumbnailGenerateJob(context, partId);
   }
 
-  @VisibleForTesting boolean isThumbnailInDatabase(long partId) throws FileNotFoundException {
-    SQLiteDatabase database = databaseHelper.getReadableDatabase();
-    Cursor         cursor   = null;
-
-    try {
-      cursor = database.query(TABLE_NAME, new String[]{THUMBNAIL}, ID_WHERE,
-                              new String[] {partId+""}, null, null, null);
-
-      if (cursor != null && cursor.moveToFirst()) {
-        return (!cursor.isNull(0));
-      } else {
-        throw new FileNotFoundException("No part for id: " + partId);
-      }
-    } finally {
-      if (cursor != null)
-        cursor.close();
-    }
-  }
-
-  public void generatePartThumbnail(MasterSecret masterSecret, long partId) throws IOException, MmsException {
-    try {
-      Log.w(TAG, "generatePartThumbnail()");
-      PduPart part        = getPart(partId);
-      long    startMillis = System.currentTimeMillis();
-      Bitmap  thumbnail   = MediaUtil.generateThumbnail(context, masterSecret, part.getDataUri(), Util.toIsoString(part.getContentType()));
-
-      if (thumbnail == null) {
-        Log.w(TAG, "media doesn't have thumbnail support, skipping.");
-        return;
-      }
-
-      InputStream jpegStream  = BitmapUtil.toCompressedJpeg(thumbnail);
-      float       aspectRatio = (float) thumbnail.getWidth() / (float) thumbnail.getHeight();
-
-      Log.w(TAG, String.format("generated thumbnail for part #%d, %dx%d (%.3f:1) in %dms",
-                               part.getId(), thumbnail.getWidth(), thumbnail.getHeight(),
-                               aspectRatio, System.currentTimeMillis() - startMillis));
-
-      thumbnail.recycle();
-
-      updatePartThumbnail(masterSecret, partId, part, jpegStream, aspectRatio);
-    } catch (BitmapDecodingException bde) {
-      throw new IOException(bde);
-    }
-  }
-
-  public InputStream getThumbnailStream(MasterSecret masterSecret, long partId) throws FileNotFoundException {
+  public InputStream getThumbnailStream(MasterSecret masterSecret, long partId) throws IOException {
     Log.w(TAG, "getThumbnailStream(" + partId + ")");
-    InputStream dataStream = getDataStream(masterSecret, partId, THUMBNAIL);
-    if (dataStream != null) {
-      return dataStream;
-    }
-
-    boolean generateNow = false;
-    synchronized (thumbnailTasks) {
-      InputStream stream = getDataStream(masterSecret, partId, THUMBNAIL);
-      if (stream != null) {
-        return stream;
-      }
-      if (!thumbnailTasks.contains(partId)) {
-        markThumbnailTaskStarted(partId);
-        generateNow = true;
-      }
-    }
-
-    if (generateNow) {
-      Log.w(TAG, "generating thumbnail on-the-fly");
+    Pair<InputStream, Boolean> streamAndLock = getThumbnailStreamOrLock(masterSecret, partId, true);
+    if (streamAndLock.second) {
       try {
-        generatePartThumbnail(masterSecret, partId);
-      } catch (MmsException | IOException e) {
-        Log.w(TAG, e);
-        throw new FileNotFoundException(e.getMessage());
-      }
-      markThumbnailTaskEnded(partId);
-    } else {
-      while (thumbnailTasks.contains(partId)) {
-        synchronized (thumbnailTasks) {
-          Util.wait(thumbnailTasks);
-        }
+        PduPart part = getPart(partId);
+        ThumbnailData data = MediaUtil.generateThumbnail(context, masterSecret, part.getDataUri(), Util.toIsoString(part.getContentType()));
+        updatePartThumbnail(masterSecret, partId, part, data.toDataStream(), data.getAspectRatio());
+      } catch (BitmapDecodingException | MmsException e) {
+        throw new IOException(e);
+      } finally {
+        markThumbnailTaskEnded(partId);
       }
     }
-
     return getDataStream(masterSecret, partId, THUMBNAIL);
   }
 
@@ -559,16 +491,36 @@ public class PartDatabase extends Database {
     }
   }
 
-  public boolean markThumbnailTaskStartedIfAbsent(long partId) throws FileNotFoundException {
-    if (isThumbnailInDatabase(partId)) return false;
+  public Pair<InputStream, Boolean> getThumbnailStreamOrLock(MasterSecret masterSecret, long partId, boolean waitOnExistingJob)
+      throws FileNotFoundException
+  {
+    Log.w(TAG, "getThumbnailStream(" + partId + ")");
+    InputStream dataStream = getDataStream(masterSecret, partId, THUMBNAIL);
+    if (dataStream != null) {
+      return new Pair<>(dataStream, false);
+    }
 
     synchronized (thumbnailTasks) {
-      if (!isThumbnailInDatabase(partId) && !thumbnailTasks.contains(partId)) {
-        markThumbnailTaskStarted(partId);
-        return true;
+      InputStream stream = getDataStream(masterSecret, partId, THUMBNAIL);
+      if (stream != null) {
+        return new Pair<>(stream, false);
       }
-      return false;
+      if (!thumbnailTasks.contains(partId)) {
+        markThumbnailTaskStarted(partId);
+        return new Pair<>(null, true);
+      }
     }
+
+    if (waitOnExistingJob) {
+      while (thumbnailTasks.contains(partId)) {
+        synchronized (thumbnailTasks) {
+          Util.wait(thumbnailTasks);
+        }
+      }
+      return new Pair<>(getDataStream(masterSecret, partId, THUMBNAIL), false);
+    }
+
+    return new Pair<>(null, false);
   }
 
   public void markThumbnailTaskEnded(long partId) {

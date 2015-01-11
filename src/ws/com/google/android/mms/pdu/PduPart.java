@@ -442,5 +442,13 @@ public class PduPart {
     public void setId(long id) {
       this.id = id;
     }
+
+    public Bitmap getThumbnail() {
+      return thumbnail;
+    }
+
+    public void setThumbnail(Bitmap thumbnail) {
+      this.thumbnail = thumbnail;
+    }
 }
 

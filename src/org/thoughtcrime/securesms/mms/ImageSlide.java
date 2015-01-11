@@ -34,9 +34,9 @@ import org.thoughtcrime.securesms.R;
 import org.thoughtcrime.securesms.database.DatabaseFactory;
 import org.thoughtcrime.securesms.database.MmsDatabase;
 import org.thoughtcrime.securesms.util.BitmapDecodingException;
-import org.thoughtcrime.securesms.util.BitmapUtil;
 import org.thoughtcrime.securesms.util.LRUCache;
 import org.thoughtcrime.securesms.util.MediaUtil;
+import org.thoughtcrime.securesms.util.MediaUtil.ThumbnailData;
 import org.thoughtcrime.securesms.util.SmilUtil;
 import org.thoughtcrime.securesms.util.Util;
 import org.w3c.dom.smil.SMILDocument;
@@ -46,7 +46,6 @@ import org.thoughtcrime.securesms.crypto.MasterSecret;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.util.Collections;
@@ -61,8 +60,6 @@ public class ImageSlide extends Slide {
   private static final int MAX_CACHE_SIZE = 10;
   private static final Map<Uri, SoftReference<Drawable>> thumbnailCache =
       Collections.synchronizedMap(new LRUCache<Uri, SoftReference<Drawable>>(MAX_CACHE_SIZE));
-
-  private Bitmap generatedThumbnail;
 
   public ImageSlide(Context context, MasterSecret masterSecret, PduPart part) {
     super(context, masterSecret, part);
@@ -93,8 +90,10 @@ public class ImageSlide extends Slide {
                                                                     .getThumbnailStream(masterSecret, part.getId()));
       } else if (part.getDataUri() != null) {
         Log.w(TAG, "generating thumbnail for new part");
-        thumbnailBitmap = generatedThumbnail = MediaUtil.generateThumbnail(context, masterSecret,
-                                                                           part.getDataUri(), Util.toIsoString(part.getContentType()));
+        ThumbnailData thumbnailData = MediaUtil.generateThumbnail(context, masterSecret,
+                                                                  part.getDataUri(), Util.toIsoString(part.getContentType()));
+        thumbnailBitmap = thumbnailData.getBitmap();
+        part.setThumbnail(thumbnailBitmap);
       } else {
         throw new FileNotFoundException("no data location specified");
       }
@@ -105,15 +104,10 @@ public class ImageSlide extends Slide {
       thumbnailCache.put(part.getDataUri(), new SoftReference<>(thumbnail));
 
       return thumbnail;
-    } catch (FileNotFoundException | BitmapDecodingException e) {
+    } catch (IOException | BitmapDecodingException e) {
       Log.w(TAG, e);
       return context.getResources().getDrawable(R.drawable.ic_missing_thumbnail_picture);
     }
-  }
-
-  @Override
-  public Bitmap getGeneratedThumbnail() {
-    return generatedThumbnail;
   }
 
   @Override

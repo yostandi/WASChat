@@ -68,7 +68,7 @@ public class BitmapUtil {
   }
 
   public static Bitmap createScaledBitmap(Context context, MasterSecret masterSecret, Uri uri, int maxWidth, int maxHeight)
-      throws BitmapDecodingException, FileNotFoundException
+      throws BitmapDecodingException, IOException
   {
     Bitmap bitmap;
     try {
@@ -82,7 +82,7 @@ public class BitmapUtil {
   }
 
   private static Bitmap createScaledBitmap(Context context, MasterSecret masterSecret, Uri uri, int maxWidth, int maxHeight, boolean constrainedMemory)
-      throws FileNotFoundException, BitmapDecodingException
+      throws IOException, BitmapDecodingException
   {
     return createScaledBitmap(PartAuthority.getPartStream(context, masterSecret, uri),
                               PartAuthority.getPartStream(context, masterSecret, uri),
@@ -223,7 +223,7 @@ public class BitmapUtil {
   }
 
   public static Bitmap getScaledCircleCroppedBitmap(Context context, MasterSecret masterSecret, Uri uri, int destSize)
-      throws FileNotFoundException, BitmapDecodingException
+      throws IOException, BitmapDecodingException
   {
     Bitmap bitmap = createScaledBitmap(context, masterSecret, uri, destSize, destSize);
     return getScaledCircleCroppedBitmap(bitmap, destSize);
