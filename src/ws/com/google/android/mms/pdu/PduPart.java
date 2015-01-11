@@ -17,6 +17,7 @@
 
 package ws.com.google.android.mms.pdu;
 
+import android.graphics.Bitmap;
 import android.net.Uri;
 
 import org.thoughtcrime.securesms.util.Util;
@@ -129,6 +130,7 @@ public class PduPart {
      private boolean isEncrypted;
      private boolean isPendingPush;
      private long    dataSize;
+     private Bitmap  thumbnail;
      
      /**
       * Empty Constructor.
