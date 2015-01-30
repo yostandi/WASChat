@@ -2,6 +2,7 @@
 <org.thoughtcrime.securesms.ConversationItem
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/conversation_item"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
@@ -46,11 +47,45 @@
 
         </LinearLayout>
 
+        <FrameLayout android:id="@+id/mms_view"
+                     android:layout_width="wrap_content"
+                     android:layout_height="wrap_content"
+                     android:layout_alignParentRight="true"
+                     android:layout_marginLeft="50dp"
+                     android:layout_marginRight="12dp"
+                     android:background="@drawable/conversation_item_media_background"
+                     android:visibility="gone"
+                     tools:visibility="visible">
+
+            <org.thoughtcrime.securesms.components.ForegroundImageView
+                    android:id="@+id/image_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="210dp"
+                    android:layout_gravity="center"
+                    android:scaleType="centerCrop"
+                    android:adjustViewBounds="true"
+                    android:contentDescription="@string/conversation_item__mms_image_description"
+                    app:riv_corner_radius="@dimen/conversation_item_corner_radius"
+                    tools:visibility="visible" />
+
+            <ImageButton
+                android:id="@+id/play_slideshow_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/mms_play_btn"
+                android:layout_gravity="center"
+                android:visibility="gone"
+                android:contentDescription="@string/conversation_item__play_button_description" />
+
+        </FrameLayout>
+
         <LinearLayout android:id="@+id/conversation_item_parent"
                       android:layout_width="wrap_content"
                       android:layout_height="wrap_content"
+                      android:layout_below="@id/mms_view"
                       android:layout_alignParentRight="true"
-                      android:background="?conversation_item_sent_push_background"
+                      android:layout_alignBottom="@id/mms_view"
+                      android:background="@drawable/conversation_item_sent_shape"
                       android:paddingRight="10dip"
                       android:paddingLeft="10dip"
                       android:layout_marginLeft="50dp"
@@ -69,38 +104,10 @@
                 android:textSize="16sp"
                 tools:text="Lorem ipsum mango dolor coconut papaya" />
 
-            <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                android:id="@+id/mms_view"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:visibility="gone">
-
-                <ImageView
-                        android:id="@+id/image_view"
-                        android:layout_width="230dip"
-                        android:layout_height="174dip"
-                        android:layout_gravity="center"
-                        android:scaleType="centerInside"
-                        android:adjustViewBounds="true"
-                        android:visibility="gone"
-                        android:contentDescription="@string/conversation_item__mms_image_description"/>
-
-                <ImageButton
-                    android:id="@+id/play_slideshow_button"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:src="@drawable/mms_play_btn"
-                    android:layout_gravity="center"
-                    android:visibility="gone"
-                    android:contentDescription="@string/conversation_item__play_button_description"/>
-
-            </FrameLayout>
-
-            <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                android:id="@+id/mms_download_controls"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
+            <LinearLayout android:id="@+id/mms_download_controls"
+                          android:layout_width="wrap_content"
+                          android:layout_height="wrap_content"
+                          android:orientation="horizontal">
 
                 <Button android:id="@+id/mms_download_button"
                     android:layout_width="wrap_content"
@@ -135,7 +142,7 @@
                           android:textColor="?conversation_sent_text_secondary_color"
                           android:visibility="gone"
                           android:layout_marginRight="8dip"
-                          android:paddingTop="1dip"/>
+                          android:paddingTop="1dip" />
 
                 <TextView android:id="@+id/conversation_item_date"
                           android:autoLink="none"
@@ -178,8 +185,9 @@
               android:layout_width="12dp"
               android:layout_height="15dp"
               android:layout_alignParentRight="true"
+              android:layout_below="@id/mms_view"
               android:layout_marginTop="12dp"
-              android:background="?conversation_item_sent_triangle_background" />
+              android:background="@drawable/conversation_item_sent_triangle_shape" />
 
         <TextView android:id="@+id/indicator_text"
             android:layout_width="wrap_content"

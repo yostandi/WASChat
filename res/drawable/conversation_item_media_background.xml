@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+       android:shape="rectangle">
+
+    <solid android:color="@color/conversation_item_sent_shadow_light" />
+    <corners android:radius="@dimen/conversation_item_corner_radius"
+             android:bottomRightRadius="0dp" />
+
+</shape>

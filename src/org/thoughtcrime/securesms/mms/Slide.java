@@ -32,6 +32,7 @@ import android.net.Uri;
 import android.util.Log;
 import android.util.TypedValue;
 import android.widget.ImageView;
+import android.widget.ImageView.ScaleType;
 
 import ws.com.google.android.mms.pdu.PduPart;
 
@@ -75,8 +76,10 @@ public abstract class Slide {
     throw new AssertionError("getThumbnail() called on non-thumbnail producing slide!");
   }
 
-  public void setThumbnailOn(Context context, ImageView imageView) {
+  public void setThumbnailOn(Context context, ImageView imageView, OnThumbnailSetListener listener) {
+    imageView.setScaleType(ScaleType.CENTER_INSIDE);
     imageView.setImageDrawable(getThumbnail(context, imageView.getWidth(), imageView.getHeight()));
+    if (listener != null) listener.onThumbnailSet(true);
   }
 
   public void setThumbnailOn(Context context, ImageView imageView, int height, int width, Drawable placeholder) {
@@ -129,5 +132,9 @@ public abstract class Slide {
       size += read;
       if (size > MmsMediaConstraints.MAX_MESSAGE_SIZE) throw new MediaTooLargeException("Media exceeds maximum message size.");
     }
+  }
+
+  public interface OnThumbnailSetListener {
+    public void onThumbnailSet(boolean fromMemory);
   }
 }

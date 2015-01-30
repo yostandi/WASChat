@@ -6,6 +6,7 @@
                                              android:orientation="vertical"
                                              android:background="?conversation_item_background"
                                              xmlns:android="http://schemas.android.com/apk/res/android"
+                                             xmlns:tools="http://schemas.android.com/tools"
                                              xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <TextView android:id="@+id/group_message_status"
@@ -27,7 +28,7 @@
         android:layout_marginRight="0dp"
         android:orientation="horizontal">
 
-        <com.makeramen.RoundedImageView
+        <org.thoughtcrime.securesms.components.ForegroundImageView
             android:id="@+id/contact_photo"
             android:foreground="@drawable/contact_photo_background"
             android:layout_width="40dp"
@@ -38,6 +39,7 @@
             android:cropToPadding="true"
             android:contentDescription="@string/conversation_item_received__contact_photo_description"
             android:scaleType="centerCrop" />
+
         <View android:id="@+id/triangle_tick"
             android:layout_width="12dp"
             android:layout_height="15dp"
@@ -45,10 +47,48 @@
             android:layout_alignRight="@id/contact_photo"
             android:background="?conversation_item_received_triangle_background" />
 
+        <FrameLayout android:id="@+id/mms_view"
+                     android:layout_width="wrap_content"
+                     android:layout_height="wrap_content"
+                     android:visibility="gone"
+                     android:layout_toRightOf="@id/triangle_tick"
+                     android:background="?conversation_item_received_background"
+                     tools:visibility="visible">
+
+            <org.thoughtcrime.securesms.components.ForegroundImageView
+                       android:id="@+id/image_view"
+                       android:layout_width="wrap_content"
+                       android:layout_height="210dp"
+                       android:layout_gravity="center"
+                       android:scaleType="centerCrop"
+                       android:adjustViewBounds="true"
+                       android:contentDescription="@string/conversation_item__mms_image_description"
+                       app:riv_corner_radius="@dimen/conversation_item_corner_radius"
+                       tools:src="@drawable/ic_launcher_video_player" />
+
+            <ImageView android:id="@+id/image_downloading"
+                       android:layout_width="210dp"
+                       android:layout_height="210dp"
+                       android:layout_gravity="center"
+                       android:scaleType="center"
+                       android:src="@drawable/stat_sys_download"
+                       android:contentDescription="@string/conversation_item__mms_downloading_description"
+                       android:visibility="gone" />
+
+            <ImageButton android:id="@+id/play_slideshow_button"
+                         android:layout_width="wrap_content"
+                         android:layout_height="wrap_content"
+                         android:layout_gravity="center"
+                         android:src="@drawable/mms_play_btn"
+                         android:contentDescription="@string/conversation_item__play_button_description"
+                         android:visibility="gone" />
+        </FrameLayout>
+
         <LinearLayout android:id="@+id/conversation_item_parent"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_toRightOf="@id/triangle_tick"
+            android:layout_below="@id/mms_view"
             android:background="?conversation_item_received_background"
             android:orientation="vertical">
 
@@ -64,28 +104,6 @@
                 android:autoLink="all"
                 android:linksClickable="true" />
 
-            <FrameLayout android:id="@+id/mms_view"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:visibility="gone">
-
-                <ImageView android:id="@+id/image_view"
-                    android:layout_width="230dip"
-                    android:layout_height="174dip"
-                    android:layout_gravity="center"
-                    android:scaleType="centerInside"
-                    android:adjustViewBounds="true"
-                    android:contentDescription="@string/conversation_item__mms_image_description"
-                    android:visibility="gone" />
-                <ImageButton android:id="@+id/play_slideshow_button"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:src="@drawable/mms_play_btn"
-                    android:contentDescription="@string/conversation_item__play_button_description"
-                    android:visibility="gone" />
-            </FrameLayout>
-
             <LinearLayout android:id="@+id/mms_download_controls"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -100,7 +118,7 @@
 
                 <TextView android:id="@+id/mms_label_downloading"
                     android:layout_width="wrap_content"
-                    android:layout_height="fill_parent"
+                    android:layout_height="wrap_content"
                     android:layout_marginLeft="5dp"
                     android:layout_marginRight="5dp"
                     android:gravity="center"

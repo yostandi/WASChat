@@ -20,15 +20,16 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.TransitionDrawable;
 import android.net.Uri;
 import android.os.Handler;
 import android.util.Log;
 import android.widget.ImageView;
+import android.widget.ImageView.ScaleType;
+
+import com.makeramen.RoundedDrawable;
 
 import org.thoughtcrime.securesms.R;
 import org.thoughtcrime.securesms.database.DatabaseFactory;
@@ -77,10 +78,6 @@ public class ImageSlide extends Slide {
       return thumbnail;
     }
 
-    if (part.isPendingPush()) {
-      return context.getResources().getDrawable(R.drawable.stat_sys_download);
-    }
-
     try {
       Bitmap thumbnailBitmap;
       long startDecode = System.currentTimeMillis();
@@ -111,25 +108,27 @@ public class ImageSlide extends Slide {
   }
 
   @Override
-  public void setThumbnailOn(Context context, ImageView imageView) {
-    setThumbnailOn(context, imageView, imageView.getWidth(), imageView.getHeight(), new ColorDrawable(Color.TRANSPARENT));
+  public void setThumbnailOn(Context context, ImageView imageView, final OnThumbnailSetListener listener) {
+    setThumbnailOn(context, imageView, imageView.getWidth(), imageView.getHeight(), new ColorDrawable(Color.TRANSPARENT),listener);
   }
 
   @Override
-  public void setThumbnailOn(Context context, ImageView imageView, final int width, final int height, final Drawable placeholder) {
+  public void setThumbnailOn(Context context, ImageView imageView, final int width, final int height, final Drawable placeholder, final OnThumbnailSetListener listener) {
     Drawable thumbnail = getCachedThumbnail();
 
     if (thumbnail != null) {
       Log.w("ImageSlide", "Setting cached thumbnail...");
-      setThumbnailOn(imageView, thumbnail, true);
+      setThumbnailOn(imageView, thumbnail);
+      if (listener != null) listener.onThumbnailSet(true);
       return;
     }
 
     final WeakReference<Context>   weakContext   = new WeakReference<>(context);
+    final Drawable temporaryDrawable             = RoundedDrawable.fromDrawable(placeholder);
     final WeakReference<ImageView> weakImageView = new WeakReference<>(imageView);
     final Handler handler                        = new Handler();
 
-    imageView.setImageDrawable(placeholder);
+    imageView.setImageDrawable(temporaryDrawable);
 
     if (width == 0 || height == 0)
       return;
@@ -147,11 +146,12 @@ public class ImageSlide extends Slide {
         final ImageView destination = weakImageView.get();
 
         Log.w(TAG, "slide resolved, destination available? " + (destination == null));
-        if (destination != null && destination.getDrawable() == placeholder) {
+        if (destination != null && destination.getDrawable() == temporaryDrawable) {
           handler.post(new Runnable() {
             @Override
             public void run() {
-              setThumbnailOn(destination, bitmap, false);
+              setThumbnailOn(destination, bitmap);
+              if (listener != null) listener.onThumbnailSet(false);
             }
           });
         }
@@ -159,17 +159,14 @@ public class ImageSlide extends Slide {
     });
   }
 
-  private void setThumbnailOn(ImageView imageView, Drawable thumbnail, boolean fromMemory) {
-    if (fromMemory) {
-      imageView.setImageDrawable(thumbnail);
-    } else if (thumbnail instanceof AnimationDrawable) {
-      imageView.setImageDrawable(thumbnail);
-      ((AnimationDrawable)imageView.getDrawable()).start();
+  private void setThumbnailOn(ImageView imageView, Drawable thumbnail) {
+    if (thumbnail.getIntrinsicWidth() < imageView.getWidth() &&
+        thumbnail.getIntrinsicHeight() < imageView.getHeight()) {
+      imageView.setScaleType(ScaleType.CENTER_INSIDE);
     } else {
-      TransitionDrawable fadingResult = new TransitionDrawable(new Drawable[]{imageView.getDrawable(), thumbnail});
-      imageView.setImageDrawable(fadingResult);
-      fadingResult.startTransition(300);
+      imageView.setScaleType(ScaleType.CENTER_CROP);
     }
+    imageView.setImageDrawable(thumbnail);
   }
 
   private Drawable getCachedThumbnail() {

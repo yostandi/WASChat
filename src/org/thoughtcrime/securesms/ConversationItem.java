@@ -16,6 +16,7 @@
  */
 package org.thoughtcrime.securesms;
 
+import android.app.ActivityOptions;
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
@@ -25,20 +26,30 @@ import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.LayerDrawable;
+import android.graphics.drawable.RotateDrawable;
+import android.os.Build.VERSION;
+import android.os.Build.VERSION_CODES;
 import android.os.Handler;
 import android.os.Message;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.QuickContact;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.nineoldandroids.animation.ObjectAnimator;
+
 import org.thoughtcrime.securesms.ConversationFragment.SelectionClickListener;
+import org.thoughtcrime.securesms.components.ForegroundImageView;
 import org.thoughtcrime.securesms.contacts.ContactPhotoFactory;
 import org.thoughtcrime.securesms.crypto.MasterSecret;
 import org.thoughtcrime.securesms.database.DatabaseFactory;
@@ -53,6 +64,7 @@ import org.thoughtcrime.securesms.jobs.MmsSendJob;
 import org.thoughtcrime.securesms.jobs.SmsSendJob;
 import org.thoughtcrime.securesms.mms.PartAuthority;
 import org.thoughtcrime.securesms.mms.Slide;
+import org.thoughtcrime.securesms.mms.Slide.OnThumbnailSetListener;
 import org.thoughtcrime.securesms.mms.SlideDeck;
 import org.thoughtcrime.securesms.recipients.Recipient;
 import org.thoughtcrime.securesms.util.DateUtils;
@@ -71,26 +83,22 @@ import java.util.Set;
  *
  */
 
-public class ConversationItem extends LinearLayout {
+public class ConversationItem extends LinearLayout implements OnThumbnailSetListener {
   private final static String TAG = ConversationItem.class.getSimpleName();
 
   private final int    STYLE_ATTRIBUTES[] = new int[]{R.attr.conversation_item_sent_push_background,
-                                                      R.attr.conversation_item_sent_push_triangle_background,
                                                       R.attr.conversation_item_sent_background,
-                                                      R.attr.conversation_item_sent_triangle_background,
                                                       R.attr.conversation_item_sent_pending_background,
-                                                      R.attr.conversation_item_sent_pending_triangle_background,
                                                       R.attr.conversation_item_sent_push_pending_background,
-                                                      R.attr.conversation_item_sent_push_pending_triangle_background};
+                                                      R.attr.conversation_item_shadow,
+                                                      R.attr.conversation_item_mms_pending_mask};
 
   private final static int SENT_PUSH                  = 0;
-  private final static int SENT_PUSH_TRIANGLE         = 1;
-  private final static int SENT_SMS                   = 2;
-  private final static int SENT_SMS_TRIANGLE          = 3;
-  private final static int SENT_SMS_PENDING           = 4;
-  private final static int SENT_SMS_PENDING_TRIANGLE  = 5;
-  private final static int SENT_PUSH_PENDING          = 6;
-  private final static int SENT_PUSH_PENDING_TRIANGLE = 7;
+  private final static int SENT_SMS                   = 1;
+  private final static int SENT_SMS_PENDING           = 2;
+  private final static int SENT_PUSH_PENDING          = 3;
+  private final static int MESSAGE_SHADOW             = 4;
+  private final static int MMS_PENDING_MASK           = 5;
 
   private Handler       failedIconHandler;
   private MessageRecord messageRecord;
@@ -113,12 +121,14 @@ public class ConversationItem extends LinearLayout {
   private Set<MessageRecord>              batchSelected;
   private SelectionClickListener          selectionClickListener;
   private View                            mmsContainer;
-  private ImageView                       mmsThumbnail;
+  private ImageView                       mmsDownloading;
+  private ForegroundImageView             mmsThumbnail;
   private Button                          mmsDownloadButton;
   private TextView                        mmsDownloadingLabel;
   private ListenableFutureTask<SlideDeck> slideDeck;
   private FutureTaskListener<SlideDeck>   slideDeckListener;
   private TypedArray                      backgroundDrawables;
+  private ObjectAnimator                  mediaFadeAnimator;
 
   private final MmsDownloadClickListener    mmsDownloadClickListener    = new MmsDownloadClickListener();
   private final MmsPreferencesClickListener mmsPreferencesClickListener = new MmsPreferencesClickListener();
@@ -147,7 +157,8 @@ public class ConversationItem extends LinearLayout {
     this.secureImage         = (ImageView)findViewById(R.id.sms_secure_indicator);
     this.failedImage         = (ImageView)findViewById(R.id.sms_failed_indicator);
     this.mmsContainer        =            findViewById(R.id.mms_view);
-    this.mmsThumbnail        = (ImageView)findViewById(R.id.image_view);
+    this.mmsThumbnail        = (ForegroundImageView)findViewById(R.id.image_view);
+    this.mmsDownloading      = (ImageView)findViewById(R.id.image_downloading);
     this.mmsDownloadButton   = (Button)   findViewById(R.id.mms_download_button);
     this.mmsDownloadingLabel = (TextView) findViewById(R.id.mms_label_downloading);
     this.contactPhoto        = (ImageView)findViewById(R.id.contact_photo);
@@ -175,20 +186,16 @@ public class ConversationItem extends LinearLayout {
 
     setConversationBackgroundDrawables(messageRecord);
     setSelectionBackgroundDrawables(messageRecord);
-    setBodyText(messageRecord);
+    setBodyText();
 
     if (!messageRecord.isGroupAction()) {
       setStatusIcons(messageRecord);
       setContactPhoto(messageRecord);
       setGroupMessageStatus(messageRecord);
       setEvents(messageRecord);
+      setConversationParentPosition();
       setMinimumWidth();
-
-      if (messageRecord.isMmsNotification()) {
-        setNotificationMmsAttributes((NotificationMmsMessageRecord)messageRecord);
-      } else if (messageRecord.isMms()) {
-        setMediaMmsAttributes((MediaMmsMessageRecord)messageRecord);
-      }
+      setMedia();
     }
   }
 
@@ -205,38 +212,43 @@ public class ConversationItem extends LinearLayout {
     this.failedIconHandler = failedIconHandler;
   }
 
-  public static void setViewBackgroundWithoutResettingPadding(final View v, final int backgroundResId) {
-    final int paddingBottom = v.getPaddingBottom();
-    final int paddingLeft   = v.getPaddingLeft();
-    final int paddingRight  = v.getPaddingRight();
-    final int paddingTop    = v.getPaddingTop();
-    v.setBackgroundResource(backgroundResId);
-    v.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom);
-  }
-
   /// MessageRecord Attribute Parsers
 
   private void setConversationBackgroundDrawables(MessageRecord messageRecord) {
     if (conversationParent != null && backgroundDrawables != null) {
       if (messageRecord.isOutgoing()) {
+        conversationParent.getBackground().mutate();
+        triangleTick.getBackground().mutate();
+        mmsContainer.getBackground().mutate();
+        LayerDrawable    messageParent = (LayerDrawable   ) conversationParent.getBackground();
+        GradientDrawable triangle      = (GradientDrawable) ((RotateDrawable)triangleTick.getBackground()).getDrawable();
+        GradientDrawable message       = (GradientDrawable) messageParent.getDrawable(1);
+        GradientDrawable shadow        = (GradientDrawable) messageParent.getDrawable(0);
+        GradientDrawable media         = (GradientDrawable) mmsContainer.getBackground();
+        int              r             = getResources().getDimensionPixelSize(R.dimen.conversation_item_corner_radius);
+
         final int background;
-        final int triangleBackground;
         if ((messageRecord.isPending() || messageRecord.isFailed()) && pushDestination && !messageRecord.isForcedSms()) {
-          background         = SENT_PUSH_PENDING;
-          triangleBackground = SENT_PUSH_PENDING_TRIANGLE;
+          background = SENT_PUSH_PENDING;
         } else if (messageRecord.isPending() || messageRecord.isFailed() || messageRecord.isPendingSmsFallback()) {
-          background         = SENT_SMS_PENDING;
-          triangleBackground = SENT_SMS_PENDING_TRIANGLE;
+          background = SENT_SMS_PENDING;
         } else if (messageRecord.isPush()) {
-          background         = SENT_PUSH;
-          triangleBackground = SENT_PUSH_TRIANGLE;
+          background = SENT_PUSH;
         } else {
-          background         = SENT_SMS;
-          triangleBackground = SENT_SMS_TRIANGLE;
+          background = SENT_SMS;
         }
 
-        setViewBackgroundWithoutResettingPadding(conversationParent, backgroundDrawables.getResourceId(background, -1));
-        setViewBackgroundWithoutResettingPadding(triangleTick, backgroundDrawables.getResourceId(triangleBackground, -1));
+        final boolean captionedMms = messageRecord.isMms() && !isCaptionlessMms();
+
+        final int color = backgroundDrawables.getColor(background, -1);
+        shadow.setColor(backgroundDrawables.getColor(MESSAGE_SHADOW, -1));
+        message.setColor(color);
+        triangle.setColor(color);
+        media.setColor(color);
+
+        final int topRadius = captionedMms ? 0 : r;
+        message.setCornerRadii(new float[]{r, r, topRadius, topRadius, r, r, r, r});
+        media.setCornerRadii(new float[]{r, r, r, r, topRadius, topRadius, r, r});
       }
     }
   }
@@ -256,17 +268,49 @@ public class ConversationItem extends LinearLayout {
     drawables.recycle();
   }
 
-  private void setBodyText(MessageRecord messageRecord) {
+  private boolean isCaptionlessMms() {
+    return TextUtils.isEmpty(messageRecord.getDisplayBody()) && messageRecord.isMms();
+  }
+
+  private void setBodyText() {
     bodyText.setClickable(false);
     bodyText.setFocusable(false);
-    bodyText.setText(Emoji.getInstance(context).emojify(messageRecord.getDisplayBody(),
-                                                        new Emoji.InvalidatingPageLoadedListener(bodyText)),
-                     TextView.BufferType.SPANNABLE);
+
+    if (isCaptionlessMms()) {
+      bodyText.setVisibility(View.GONE);
+    } else {
+      bodyText.setText(Emoji.getInstance(context).emojify(messageRecord.getDisplayBody(),
+                                                          new Emoji.InvalidatingPageLoadedListener(bodyText)),
+                       TextView.BufferType.SPANNABLE);
+      bodyText.setVisibility(View.VISIBLE);
+    }
 
     if (bodyText.isClickable() && bodyText.isFocusable()) {
       bodyText.setOnLongClickListener(new MultiSelectLongClickListener());
       bodyText.setOnClickListener(new MultiSelectLongClickListener());
     }
+  }
+
+  private void setMedia() {
+    triangleTick.setVisibility(messageRecord.isMms() ? View.INVISIBLE : View.VISIBLE);
+    mmsContainer.setVisibility(View.GONE);
+    if (messageRecord.isMmsNotification()) {
+      setNotificationMmsAttributes((NotificationMmsMessageRecord)messageRecord);
+    } else if (messageRecord.isMms()) {
+      setMediaMmsAttributes((MediaMmsMessageRecord)messageRecord);
+    }
+  }
+
+  private void setConversationParentPosition() {
+    RelativeLayout.LayoutParams parentParams = (RelativeLayout.LayoutParams)conversationParent.getLayoutParams();
+    if (isCaptionlessMms()) {
+      parentParams.addRule(RelativeLayout.BELOW, 0);
+      parentParams.addRule(RelativeLayout.ALIGN_BOTTOM, R.id.mms_view);
+    } else {
+      parentParams.addRule(RelativeLayout.BELOW, R.id.mms_view);
+      parentParams.addRule(RelativeLayout.ALIGN_BOTTOM, 0);
+    }
+    conversationParent.setLayoutParams(parentParams);
   }
 
   private void setContactPhoto(MessageRecord messageRecord) {
@@ -288,11 +332,23 @@ public class ConversationItem extends LinearLayout {
     mmsDownloadButton.setVisibility(View.GONE);
     mmsDownloadingLabel.setVisibility(View.GONE);
 
-    if      (messageRecord.isFailed())             setFailedStatusIcons();
-    else if (messageRecord.isPendingSmsFallback()) setFallbackStatusIcons();
-    else if (messageRecord.isPending())            dateText.setText(" ··· ");
-    else                                           setSentStatusIcons();
-
+    if (messageRecord.isFailed()) {
+      dateText.setText(R.string.ConversationItem_error_sending_message);
+    } else if (messageRecord.isPendingSmsFallback() && indicatorText != null) {
+      dateText.setText("");
+      if (messageRecord.isPendingSecureSmsFallback()) {
+        if (messageRecord.isMms()) indicatorText.setText(R.string.ConversationItem_click_to_approve_mms);
+        else                       indicatorText.setText(R.string.ConversationItem_click_to_approve_sms);
+      } else {
+        indicatorText.setText(R.string.ConversationItem_click_to_approve_unencrypted);
+      }
+    } else if (messageRecord.isPending()) {
+      mmsThumbnail.setForeground(new ColorDrawable(backgroundDrawables.getColor(MMS_PENDING_MASK, -1)));
+      dateText.setText(" ··· ");
+    } else {
+      mmsThumbnail.setForeground(new ColorDrawable(Color.TRANSPARENT));
+      final long timestamp;
+    }
   }
 
   private void setSentStatusIcons() {
@@ -385,11 +441,13 @@ public class ConversationItem extends LinearLayout {
   private void setMediaMmsAttributes(MediaMmsMessageRecord messageRecord) {
     if (messageRecord.getPartCount() > 0) {
       mmsThumbnail.setVisibility(View.VISIBLE);
-      mmsContainer.setVisibility(View.VISIBLE);
+      mmsContainer.setVisibility(View.INVISIBLE);
       mmsThumbnail.setImageDrawable(new ColorDrawable(Color.TRANSPARENT));
     } else {
       mmsThumbnail.setVisibility(View.GONE);
-      mmsContainer.setVisibility(View.GONE);
+    }
+    if (!messageRecord.isOutgoing()) {
+      mmsDownloading.setVisibility(View.GONE);
     }
 
     slideDeck = messageRecord.getSlideDeckFuture();
@@ -404,14 +462,22 @@ public class ConversationItem extends LinearLayout {
           public void run() {
             for (Slide slide : result.getSlides()) {
               if (slide.hasImage()) {
-                slide.setThumbnailOn(context, mmsThumbnail);
+                if (slide.getPart().isPendingPush()) {
+                  mmsDownloading.setVisibility(View.VISIBLE);
+                  mmsContainer.setVisibility(View.VISIBLE);
+                  return;
+                }
+
+                slide.setThumbnailOn(mmsThumbnail, ConversationItem.this);
                 mmsThumbnail.setOnClickListener(new ThumbnailClickListener(slide));
                 mmsThumbnail.setVisibility(View.VISIBLE);
+
                 return;
               }
             }
 
             mmsThumbnail.setVisibility(View.GONE);
+            mmsContainer.setVisibility(View.GONE);
           }
         });
       }
@@ -488,6 +554,17 @@ public class ConversationItem extends LinearLayout {
     context.startActivity(intent);
   }
 
+  @Override
+  public void onThumbnailSet(boolean fromMemory) {
+    if (mediaFadeAnimator != null) mediaFadeAnimator.end();
+
+    if (!fromMemory) {
+      if (mediaFadeAnimator == null) mediaFadeAnimator = ObjectAnimator.ofFloat(mmsContainer, "alpha", 0.0f, 1.0f).setDuration(300);
+      mediaFadeAnimator.start();
+    }
+    mmsContainer.setVisibility(View.VISIBLE);
+  }
+
   private class ThumbnailClickListener implements View.OnClickListener {
     private final Slide slide;
 
@@ -518,7 +595,12 @@ public class ConversationItem extends LinearLayout {
         intent.putExtra(MediaPreviewActivity.MASTER_SECRET_EXTRA, masterSecret);
         if (!messageRecord.isOutgoing()) intent.putExtra(MediaPreviewActivity.RECIPIENT_EXTRA, messageRecord.getIndividualRecipient().getRecipientId());
         intent.putExtra(MediaPreviewActivity.DATE_EXTRA, messageRecord.getDateReceived());
-        context.startActivity(intent);
+        if (VERSION.SDK_INT >= VERSION_CODES.JELLY_BEAN) {
+          ActivityOptions options = ActivityOptions.makeScaleUpAnimation(mmsThumbnail, 0, 0, mmsThumbnail.getWidth(), mmsThumbnail.getHeight());
+          context.startActivity(intent, options.toBundle());
+        } else {
+          context.startActivity(intent);
+        }
       } else {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle(R.string.ConversationItem_view_secure_media_question);

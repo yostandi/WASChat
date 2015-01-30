@@ -23,14 +23,15 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.Gravity;
-import android.widget.ImageView;
+
+import com.makeramen.RoundedImageView;
 
 import org.thoughtcrime.securesms.R;
 
 /**
  * https://gist.github.com/chrisbanes/9091754
  */
-public class ForegroundImageView extends ImageView {
+public class ForegroundImageView extends RoundedImageView {
 
   private Drawable mForeground;
 
