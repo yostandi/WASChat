@@ -67,6 +67,7 @@ import org.thoughtcrime.securesms.mms.Slide;
 import org.thoughtcrime.securesms.mms.Slide.OnThumbnailSetListener;
 import org.thoughtcrime.securesms.mms.SlideDeck;
 import org.thoughtcrime.securesms.recipients.Recipient;
+import org.thoughtcrime.securesms.util.ConversationDrawable;
 import org.thoughtcrime.securesms.util.DateUtils;
 import org.thoughtcrime.securesms.util.Dialogs;
 import org.thoughtcrime.securesms.util.Emoji;
@@ -217,16 +218,6 @@ public class ConversationItem extends LinearLayout implements OnThumbnailSetList
   private void setConversationBackgroundDrawables(MessageRecord messageRecord) {
     if (conversationParent != null && backgroundDrawables != null) {
       if (messageRecord.isOutgoing()) {
-        conversationParent.getBackground().mutate();
-        triangleTick.getBackground().mutate();
-        mmsContainer.getBackground().mutate();
-        LayerDrawable    messageParent = (LayerDrawable   ) conversationParent.getBackground();
-        GradientDrawable triangle      = (GradientDrawable) ((RotateDrawable)triangleTick.getBackground()).getDrawable();
-        GradientDrawable message       = (GradientDrawable) messageParent.getDrawable(1);
-        GradientDrawable shadow        = (GradientDrawable) messageParent.getDrawable(0);
-        GradientDrawable media         = (GradientDrawable) mmsContainer.getBackground();
-        int              r             = getResources().getDimensionPixelSize(R.dimen.conversation_item_corner_radius);
-
         final int background;
         if ((messageRecord.isPending() || messageRecord.isFailed()) && pushDestination && !messageRecord.isForcedSms()) {
           background = SENT_PUSH_PENDING;
@@ -238,17 +229,12 @@ public class ConversationItem extends LinearLayout implements OnThumbnailSetList
           background = SENT_SMS;
         }
 
-        final boolean captionedMms = messageRecord.isMms() && !isCaptionlessMms(messageRecord);
+        ConversationDrawable.setColors(conversationParent, triangleTick, mmsContainer,
+                                       backgroundDrawables.getColor(background, -1),
+                                       backgroundDrawables.getColor(MESSAGE_SHADOW, -1));
 
-        final int color = backgroundDrawables.getColor(background, -1);
-        shadow.setColor(backgroundDrawables.getColor(MESSAGE_SHADOW, -1));
-        message.setColor(color);
-        triangle.setColor(color);
-        media.setColor(color);
-
-        final int topRadius = captionedMms ? 0 : r;
-        message.setCornerRadii(new float[]{r, r, topRadius, topRadius, r, r, r, r});
-        media.setCornerRadii(new float[]{r, r, r, r, topRadius, topRadius, r, r});
+        ConversationDrawable.setCorners(context, conversationParent, mmsContainer,
+                                        messageRecord.isMms() && !isCaptionlessMms(messageRecord));
       }
     }
   }
