@@ -186,16 +186,16 @@ public class ConversationItem extends LinearLayout implements OnThumbnailSetList
 
     setConversationBackgroundDrawables(messageRecord);
     setSelectionBackgroundDrawables(messageRecord);
-    setBodyText();
+    setBodyText(messageRecord);
 
     if (!messageRecord.isGroupAction()) {
       setStatusIcons(messageRecord);
       setContactPhoto(messageRecord);
       setGroupMessageStatus(messageRecord);
       setEvents(messageRecord);
-      setConversationParentPosition();
+      setConversationParentPosition(messageRecord);
       setMinimumWidth();
-      setMedia();
+      setMediaAttributes(messageRecord);
     }
   }
 
@@ -238,7 +238,7 @@ public class ConversationItem extends LinearLayout implements OnThumbnailSetList
           background = SENT_SMS;
         }
 
-        final boolean captionedMms = messageRecord.isMms() && !isCaptionlessMms();
+        final boolean captionedMms = messageRecord.isMms() && !isCaptionlessMms(messageRecord);
 
         final int color = backgroundDrawables.getColor(background, -1);
         shadow.setColor(backgroundDrawables.getColor(MESSAGE_SHADOW, -1));
@@ -268,15 +268,15 @@ public class ConversationItem extends LinearLayout implements OnThumbnailSetList
     drawables.recycle();
   }
 
-  private boolean isCaptionlessMms() {
+  private static boolean isCaptionlessMms(MessageRecord messageRecord) {
     return TextUtils.isEmpty(messageRecord.getDisplayBody()) && messageRecord.isMms();
   }
 
-  private void setBodyText() {
+  private void setBodyText(MessageRecord messageRecord) {
     bodyText.setClickable(false);
     bodyText.setFocusable(false);
 
-    if (isCaptionlessMms()) {
+    if (isCaptionlessMms(messageRecord)) {
       bodyText.setVisibility(View.GONE);
     } else {
       bodyText.setText(Emoji.getInstance(context).emojify(messageRecord.getDisplayBody(),
@@ -291,7 +291,7 @@ public class ConversationItem extends LinearLayout implements OnThumbnailSetList
     }
   }
 
-  private void setMedia() {
+  private void setMediaAttributes(MessageRecord messageRecord) {
     triangleTick.setVisibility(messageRecord.isMms() ? View.INVISIBLE : View.VISIBLE);
     mmsContainer.setVisibility(View.GONE);
     if (messageRecord.isMmsNotification()) {
@@ -301,9 +301,9 @@ public class ConversationItem extends LinearLayout implements OnThumbnailSetList
     }
   }
 
-  private void setConversationParentPosition() {
+  private void setConversationParentPosition(MessageRecord messageRecord) {
     RelativeLayout.LayoutParams parentParams = (RelativeLayout.LayoutParams)conversationParent.getLayoutParams();
-    if (isCaptionlessMms()) {
+    if (isCaptionlessMms(messageRecord)) {
       parentParams.addRule(RelativeLayout.BELOW, 0);
       parentParams.addRule(RelativeLayout.ALIGN_BOTTOM, R.id.mms_view);
     } else {
@@ -381,7 +381,7 @@ public class ConversationItem extends LinearLayout implements OnThumbnailSetList
   private void setMinimumWidth() {
     if (indicatorText != null && indicatorText.getVisibility() == View.VISIBLE && indicatorText.getText() != null) {
       final float density = getResources().getDisplayMetrics().density;
-      conversationParent.setMinimumWidth(indicatorText.getText().length() * (int)(6.5 * density));
+      conversationParent.setMinimumWidth(indicatorText.getText().length() * (int) (6.5 * density));
     } else {
       conversationParent.setMinimumWidth(0);
     }
