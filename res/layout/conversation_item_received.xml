@@ -52,7 +52,7 @@
                      android:layout_height="wrap_content"
                      android:visibility="gone"
                      android:layout_toRightOf="@id/triangle_tick"
-                     android:background="?conversation_item_received_background"
+                     android:background="@drawable/conversation_item_media_background"
                      tools:visibility="visible">
 
             <org.thoughtcrime.securesms.components.ForegroundImageView

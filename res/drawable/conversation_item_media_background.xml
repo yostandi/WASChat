@@ -3,7 +3,6 @@
        android:shape="rectangle">
 
     <solid android:color="@color/conversation_item_sent_shadow_light" />
-    <corners android:radius="@dimen/conversation_item_corner_radius"
-             android:bottomRightRadius="0dp" />
+    <corners android:radius="@dimen/conversation_item_corner_radius" />
 
 </shape>
