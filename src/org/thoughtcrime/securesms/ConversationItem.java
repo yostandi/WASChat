@@ -63,7 +63,7 @@ import org.thoughtcrime.securesms.mms.Slide;
 import org.thoughtcrime.securesms.mms.Slide.OnThumbnailSetListener;
 import org.thoughtcrime.securesms.mms.SlideDeck;
 import org.thoughtcrime.securesms.recipients.Recipient;
-import org.thoughtcrime.securesms.util.ConversationBubble;
+import org.thoughtcrime.securesms.components.ConversationBubble;
 import org.thoughtcrime.securesms.util.DateUtils;
 import org.thoughtcrime.securesms.util.Dialogs;
 import org.thoughtcrime.securesms.util.Emoji;
@@ -151,6 +151,7 @@ public class ConversationItem extends LinearLayout implements OnThumbnailSetList
     this.conversationParent  =            findViewById(R.id.conversation_item_parent);
     this.triangleTick        =            findViewById(R.id.triangle_tick);
     this.pendingIndicator    = (ImageView)findViewById(R.id.pending_approval_indicator);
+    this.bubble              = (ConversationBubble)findViewById(R.id.bubble);
 
     setOnClickListener(clickListener);
     if (mmsDownloadButton != null) mmsDownloadButton.setOnClickListener(mmsDownloadClickListener);
@@ -172,8 +173,7 @@ public class ConversationItem extends LinearLayout implements OnThumbnailSetList
     setBodyText(messageRecord);
 
     if (hasConversationBubble(messageRecord)) {
-      this.bubble = ConversationBubble.from(getContext(), messageRecord.isOutgoing(), conversationParent, triangleTick, mmsContainer);
-      setConversationBackgroundDrawables(messageRecord);
+      setBubbleState(messageRecord);
       setStatusIcons(messageRecord);
       setContactPhoto(messageRecord);
       setGroupMessageStatus(messageRecord);
@@ -198,7 +198,7 @@ public class ConversationItem extends LinearLayout implements OnThumbnailSetList
 
   /// MessageRecord Attribute Parsers
 
-  private void setConversationBackgroundDrawables(MessageRecord messageRecord) {
+  private void setBubbleState(MessageRecord messageRecord) {
     if (conversationParent != null) {
       final int transportationState;
       if ((messageRecord.isPending() || messageRecord.isFailed()) && pushDestination && !messageRecord.isForcedSms()) {
@@ -221,7 +221,7 @@ public class ConversationItem extends LinearLayout implements OnThumbnailSetList
       }
 
       bubble.setTransportState(transportationState);
-      bubble.setMediaCaptionState(mediaCaptionState);
+      bubble.setMediaState(mediaCaptionState);
     }
   }
 
@@ -269,7 +269,6 @@ public class ConversationItem extends LinearLayout implements OnThumbnailSetList
 
   private void setMediaAttributes(MessageRecord messageRecord) {
     triangleTick.setVisibility(messageRecord.isMms() ? View.INVISIBLE : View.VISIBLE);
-    mmsContainer.setVisibility(View.GONE);
     if (messageRecord.isMmsNotification()) {
       setNotificationMmsAttributes((NotificationMmsMessageRecord)messageRecord);
     } else if (messageRecord.isMms()) {
