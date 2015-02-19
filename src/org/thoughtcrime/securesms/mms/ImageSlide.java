@@ -26,10 +26,12 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Handler;
 import android.util.Log;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
 
 import com.makeramen.RoundedDrawable;
+import com.nineoldandroids.animation.ObjectAnimator;
 
 import org.thoughtcrime.securesms.R;
 import org.thoughtcrime.securesms.database.DatabaseFactory;
@@ -57,6 +59,8 @@ import ws.com.google.android.mms.pdu.PduPart;
 
 public class ImageSlide extends Slide {
   private static final String TAG = ImageSlide.class.getSimpleName();
+
+  private ObjectAnimator mediaFadeAnimator;
 
   private static final int MAX_CACHE_SIZE = 10;
   private static final Map<Uri, SoftReference<Drawable>> thumbnailCache =
@@ -108,24 +112,24 @@ public class ImageSlide extends Slide {
   }
 
   @Override
-  public void setThumbnailOn(Context context, ImageView imageView, final OnThumbnailSetListener listener) {
-    setThumbnailOn(context, imageView, imageView.getWidth(), imageView.getHeight(), new ColorDrawable(Color.TRANSPARENT),listener);
+  public void setThumbnailOn(Context context, ImageView imageView, View imageContainer) {
+    setThumbnailOn(context, imageView, imageContainer, imageView.getWidth(), imageView.getHeight(), new ColorDrawable(Color.TRANSPARENT));
   }
 
   @Override
-  public void setThumbnailOn(Context context, ImageView imageView, final int width, final int height, final Drawable placeholder, final OnThumbnailSetListener listener) {
+  public void setThumbnailOn(Context context, ImageView imageView, View imageContainer, final int width, final int height, final Drawable placeholder) {
     Drawable thumbnail = getCachedThumbnail();
 
     if (thumbnail != null) {
       Log.w("ImageSlide", "Setting cached thumbnail...");
-      setThumbnailOn(imageView, thumbnail);
-      if (listener != null) listener.onThumbnailSet(true);
+      setThumbnailOn(imageView, imageContainer, thumbnail, true);
       return;
     }
 
     final WeakReference<Context>   weakContext   = new WeakReference<>(context);
     final Drawable temporaryDrawable             = RoundedDrawable.fromDrawable(placeholder);
     final WeakReference<ImageView> weakImageView = new WeakReference<>(imageView);
+    final WeakReference<View> weakContainer      = new WeakReference<>(imageContainer);
     final Handler handler                        = new Handler();
 
     imageView.setImageDrawable(temporaryDrawable);
@@ -144,14 +148,14 @@ public class ImageSlide extends Slide {
 
         final Drawable bitmap = getThumbnail(context, width, height);
         final ImageView destination = weakImageView.get();
+        final View      container   = weakContainer.get();
 
         Log.w(TAG, "slide resolved, destination available? " + (destination == null));
-        if (destination != null && destination.getDrawable() == temporaryDrawable) {
+        if (destination != null && container != null && destination.getDrawable() == temporaryDrawable) {
           handler.post(new Runnable() {
             @Override
             public void run() {
-              setThumbnailOn(destination, bitmap);
-              if (listener != null) listener.onThumbnailSet(false);
+              setThumbnailOn(destination, container, bitmap, false);
             }
           });
         }
@@ -159,7 +163,7 @@ public class ImageSlide extends Slide {
     });
   }
 
-  private void setThumbnailOn(ImageView imageView, Drawable thumbnail) {
+  private void setThumbnailOn(ImageView imageView, View imageContainer, Drawable thumbnail, boolean fromMemory) {
     if (thumbnail.getIntrinsicWidth() < imageView.getWidth() &&
         thumbnail.getIntrinsicHeight() < imageView.getHeight()) {
       imageView.setScaleType(ScaleType.CENTER_INSIDE);
@@ -167,6 +171,13 @@ public class ImageSlide extends Slide {
       imageView.setScaleType(ScaleType.CENTER_CROP);
     }
     imageView.setImageDrawable(thumbnail);
+
+    if (mediaFadeAnimator != null) mediaFadeAnimator.end();
+    if (!fromMemory) {
+        if (mediaFadeAnimator == null) mediaFadeAnimator = ObjectAnimator.ofFloat(imageContainer, "alpha", 0.0f, 1.0f).setDuration(300);
+        mediaFadeAnimator.start();
+    }
+    imageContainer.setVisibility(View.VISIBLE);
   }
 
   private Drawable getCachedThumbnail() {

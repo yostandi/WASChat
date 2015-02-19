@@ -42,8 +42,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.nineoldandroids.animation.ObjectAnimator;
-
 import org.thoughtcrime.securesms.ConversationFragment.SelectionClickListener;
 import org.thoughtcrime.securesms.components.ForegroundImageView;
 import org.thoughtcrime.securesms.contacts.ContactPhotoFactory;
@@ -60,7 +58,6 @@ import org.thoughtcrime.securesms.jobs.MmsSendJob;
 import org.thoughtcrime.securesms.jobs.SmsSendJob;
 import org.thoughtcrime.securesms.mms.PartAuthority;
 import org.thoughtcrime.securesms.mms.Slide;
-import org.thoughtcrime.securesms.mms.Slide.OnThumbnailSetListener;
 import org.thoughtcrime.securesms.mms.SlideDeck;
 import org.thoughtcrime.securesms.recipients.Recipient;
 import org.thoughtcrime.securesms.components.ConversationBubble;
@@ -80,7 +77,7 @@ import java.util.Set;
  *
  */
 
-public class ConversationItem extends LinearLayout implements OnThumbnailSetListener {
+public class ConversationItem extends LinearLayout {
   private final static String TAG = ConversationItem.class.getSimpleName();
 
   private final static int STYLE_ATTRIBUTES[] = new int[]{R.attr.conversation_item_mms_pending_mask};
@@ -113,7 +110,6 @@ public class ConversationItem extends LinearLayout implements OnThumbnailSetList
   private TextView                        mmsDownloadingLabel;
   private ListenableFutureTask<SlideDeck> slideDeck;
   private FutureTaskListener<SlideDeck>   slideDeckListener;
-  private ObjectAnimator                  mediaFadeAnimator;
 
   private final MmsDownloadClickListener    mmsDownloadClickListener    = new MmsDownloadClickListener();
   private final MmsPreferencesClickListener mmsPreferencesClickListener = new MmsPreferencesClickListener();
@@ -431,7 +427,7 @@ public class ConversationItem extends LinearLayout implements OnThumbnailSetList
                   return;
                 }
 
-                slide.setThumbnailOn(mmsThumbnail, ConversationItem.this);
+                slide.setThumbnailOn(mmsThumbnail, mmsContainer);
                 mmsThumbnail.setOnClickListener(new ThumbnailClickListener(slide));
                 mmsThumbnail.setVisibility(View.VISIBLE);
 
@@ -515,17 +511,6 @@ public class ConversationItem extends LinearLayout implements OnThumbnailSetList
     intent.putExtra("master_secret", masterSecret);
     intent.putExtra("sent", messageRecord.isOutgoing());
     context.startActivity(intent);
-  }
-
-  @Override
-  public void onThumbnailSet(boolean fromMemory) {
-    if (mediaFadeAnimator != null) mediaFadeAnimator.end();
-
-    if (!fromMemory) {
-      if (mediaFadeAnimator == null) mediaFadeAnimator = ObjectAnimator.ofFloat(mmsContainer, "alpha", 0.0f, 1.0f).setDuration(300);
-      mediaFadeAnimator.start();
-    }
-    mmsContainer.setVisibility(View.VISIBLE);
   }
 
   private class ThumbnailClickListener implements View.OnClickListener {

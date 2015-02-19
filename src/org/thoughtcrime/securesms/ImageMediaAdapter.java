@@ -79,8 +79,9 @@ public class ImageMediaAdapter extends CursorRecyclerViewAdapter<ViewHolder> {
     part.setContentType(imageRecord.getContentType().getBytes());
     part.setId(imageRecord.getPartId());
 
+    imageView.setVisibility(View.INVISIBLE);
     Slide slide = MediaUtil.getSlideForPart(getContext(), masterSecret, part, imageRecord.getContentType());
-    if (slide != null) slide.setThumbnailOn(getContext(), imageView, gridSize, gridSize, new ColorDrawable(0x11ffffff));
+    if (slide != null) slide.setThumbnailOn(getContext(), imageView, imageView, gridSize, gridSize, new ColorDrawable(0x11ffffff));
 
     imageView.setOnClickListener(new OnMediaClickListener(imageRecord));
   }
