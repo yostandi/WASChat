@@ -10,14 +10,14 @@
           android:layout_height="15dp"
           android:layout_marginTop="12dp"
           android:layout_alignParentLeft="true"
-          android:layout_alignParentStart="true"
           android:background="?conversation_item_received_triangle_background" />
 
     <FrameLayout android:id="@+id/mms_view"
                  android:layout_width="wrap_content"
                  android:layout_height="wrap_content"
                  android:visibility="gone"
-                 android:layout_toRightOf="@id/triangle_tick"
+                 android:layout_alignParentLeft="true"
+                 android:layout_marginLeft="12dp"
                  android:background="@drawable/conversation_item_media_background"
                  tools:visibility="visible">
 

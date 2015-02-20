@@ -1,13 +1,29 @@
+/**
+ * Copyright (C) 2015 Open Whisper Systems
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.thoughtcrime.securesms.components;
 
 import android.annotation.TargetApi;
 import android.content.Context;
-import android.content.res.TypedArray;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
 import android.graphics.drawable.RotateDrawable;
 import android.os.Build.VERSION_CODES;
-import android.support.annotation.AttrRes;
 import android.support.annotation.IntDef;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -15,6 +31,7 @@ import android.view.View;
 import android.widget.RelativeLayout;
 
 import org.thoughtcrime.securesms.R;
+import org.thoughtcrime.securesms.util.StyleUtil;
 
 public abstract class ConversationBubble extends RelativeLayout {
   private static final String TAG = ConversationBubble.class.getSimpleName();
@@ -34,11 +51,12 @@ public abstract class ConversationBubble extends RelativeLayout {
   @IntDef({MEDIA_STATE_NO_MEDIA, MEDIA_STATE_CAPTIONLESS, MEDIA_STATE_CAPTIONED})
   public @interface MediaState {}
 
-  private View       conversationParent;
-  private View       triangleTick;
-  private View       mmsContainer;
-  private TypedArray transportDrawables;
-  private int        shadowColor;
+  private View                conversationParent;
+  private View                triangleTick;
+  private View                mmsContainer;
+  private ForegroundImageView mmsThumbnail;
+  private int                 shadowColor;
+  private int                 mmsPendingOverlayColor;
 
   private LayerDrawable    messageParentDrawable;
   private GradientDrawable tickDrawable;
@@ -79,8 +97,10 @@ public abstract class ConversationBubble extends RelativeLayout {
     this.conversationParent = findViewById(R.id.conversation_item_parent);
     this.triangleTick       = findViewById(R.id.triangle_tick);
     this.mmsContainer       = findViewById(R.id.mms_view);
+    this.mmsThumbnail       = (ForegroundImageView)findViewById(R.id.image_view);
 
-    this.shadowColor        = getThemedColor(getContext(), R.attr.conversation_item_shadow);
+    this.shadowColor            = StyleUtil.getStyledColor(getContext(), R.attr.conversation_item_shadow);
+    this.mmsPendingOverlayColor = StyleUtil.getStyledColor(getContext(), R.attr.conversation_item_mms_pending_mask);
   }
 
   protected void getDrawables() {
@@ -100,6 +120,7 @@ public abstract class ConversationBubble extends RelativeLayout {
   public void setTransportState(@TransportState int transportState) {
     getDrawables();
     setColors(transportState);
+    setMediaPendingMask(transportState);
   }
 
   public void setMediaState(@MediaState int mediaState) {
@@ -109,11 +130,20 @@ public abstract class ConversationBubble extends RelativeLayout {
     setShadowDistance(mediaState == MEDIA_STATE_CAPTIONED || mediaState == MEDIA_STATE_NO_MEDIA
                       ? getContext().getResources().getDimensionPixelSize(R.dimen.conversation_item_drop_shadow_dist)
                       : 0);
-    setMediaVisibility(mediaState == MEDIA_STATE_CAPTIONED || mediaState == MEDIA_STATE_CAPTIONLESS);
+    setMediaVisibility(mediaState);
   }
 
-  private void setMediaVisibility(boolean visible) {
-    mmsContainer.setVisibility(visible ? View.VISIBLE : View.GONE);
+  private void setMediaVisibility(@MediaState int mediaState) {
+    mmsContainer.setVisibility(isMediaPresent(mediaState) ? VISIBLE : GONE);
+    triangleTick.setVisibility(isMediaPresent(mediaState) ? GONE : VISIBLE);
+  }
+
+  private void setMediaPendingMask(@TransportState int transportState) {
+    if (isPending(transportState)) {
+      mmsThumbnail.setForeground(new ColorDrawable(mmsPendingOverlayColor));
+    } else {
+      mmsThumbnail.setForeground(new ColorDrawable(Color.TRANSPARENT));
+    }
   }
 
   private void setColors(@TransportState int transportState) {
@@ -151,13 +181,6 @@ public abstract class ConversationBubble extends RelativeLayout {
     conversationParent.setLayoutParams(parentParams);
   }
 
-  protected static int getThemedColor(Context context, @AttrRes int attr) {
-    final TypedArray styledShadow = context.obtainStyledAttributes(new int[]{attr});
-    final int        result       = styledShadow.getColor(0, -1);
-    styledShadow.recycle();
-    return result;
-  }
-
   private static float[] cornerBooleansToRadii(boolean[] corners, int radius) {
     if (corners == null || corners.length != 4) {
       throw new AssertionError("there are four corners in a rectangle, silly");
@@ -174,4 +197,11 @@ public abstract class ConversationBubble extends RelativeLayout {
     return radii;
   }
 
+  private boolean isMediaPresent(@MediaState int mediaState) {
+    return mediaState != MEDIA_STATE_NO_MEDIA;
+  }
+
+  private boolean isPending(@TransportState int transportState) {
+    return transportState == TRANSPORT_STATE_PUSH_PENDING || transportState == TRANSPORT_STATE_SMS_PENDING;
+  }
 }

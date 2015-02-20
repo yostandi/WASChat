@@ -24,6 +24,8 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Build.VERSION;
+import android.os.Build.VERSION_CODES;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
@@ -173,7 +175,7 @@ public class ImageSlide extends Slide {
     imageView.setImageDrawable(thumbnail);
 
     if (mediaFadeAnimator != null) mediaFadeAnimator.end();
-    if (!fromMemory) {
+    if (!fromMemory && VERSION.SDK_INT >= VERSION_CODES.HONEYCOMB) {
         if (mediaFadeAnimator == null) mediaFadeAnimator = ObjectAnimator.ofFloat(imageContainer, "alpha", 0.0f, 1.0f).setDuration(300);
         mediaFadeAnimator.start();
     }

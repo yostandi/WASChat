@@ -66,6 +66,7 @@ import org.thoughtcrime.securesms.util.Dialogs;
 import org.thoughtcrime.securesms.util.Emoji;
 import org.thoughtcrime.securesms.util.FutureTaskListener;
 import org.thoughtcrime.securesms.util.ListenableFutureTask;
+import org.thoughtcrime.securesms.util.StyleUtil;
 
 import java.util.Set;
 
@@ -79,8 +80,6 @@ import java.util.Set;
 
 public class ConversationItem extends LinearLayout {
   private final static String TAG = ConversationItem.class.getSimpleName();
-
-  private final static int STYLE_ATTRIBUTES[] = new int[]{R.attr.conversation_item_mms_pending_mask};
 
   private Handler       failedIconHandler;
   private MessageRecord messageRecord;
@@ -197,9 +196,15 @@ public class ConversationItem extends LinearLayout {
   private void setBubbleState(MessageRecord messageRecord) {
     if (conversationParent != null) {
       final int transportationState;
-      if ((messageRecord.isPending() || messageRecord.isFailed()) && pushDestination && !messageRecord.isForcedSms()) {
+      if ((messageRecord.isPending() || messageRecord.isFailed()) &&
+          pushDestination                                         &&
+          !messageRecord.isForcedSms())
+      {
         transportationState = ConversationBubble.TRANSPORT_STATE_PUSH_PENDING;
-      } else if (messageRecord.isPending() || messageRecord.isFailed() || messageRecord.isPendingSmsFallback()) {
+      } else if (messageRecord.isPending() ||
+                 messageRecord.isFailed()  ||
+                 messageRecord.isPendingSmsFallback())
+      {
         transportationState = ConversationBubble.TRANSPORT_STATE_SMS_PENDING;
       } else if (messageRecord.isPush()) {
         transportationState = ConversationBubble.TRANSPORT_STATE_PUSH_SENT;
@@ -264,9 +269,8 @@ public class ConversationItem extends LinearLayout {
   }
 
   private void setMediaAttributes(MessageRecord messageRecord) {
-    triangleTick.setVisibility(messageRecord.isMms() ? View.INVISIBLE : View.VISIBLE);
     if (messageRecord.isMmsNotification()) {
-      setNotificationMmsAttributes((NotificationMmsMessageRecord)messageRecord);
+      setNotificationMmsAttributes((NotificationMmsMessageRecord) messageRecord);
     } else if (messageRecord.isMms()) {
       setMediaMmsAttributes((MediaMmsMessageRecord)messageRecord);
     }
@@ -302,21 +306,15 @@ public class ConversationItem extends LinearLayout {
         indicatorText.setText(R.string.ConversationItem_click_to_approve_unencrypted);
       }
     } else if (messageRecord.isPending()) {
-//      mmsThumbnail.setForeground(new ColorDrawable(backgroundDrawables.getColor(MMS_PENDING_MASK, -1)));
       dateText.setText(" ··· ");
     } else {
-      mmsThumbnail.setForeground(new ColorDrawable(Color.TRANSPARENT));
       final long timestamp;
+      if (messageRecord.isPush()) timestamp = messageRecord.getDateSent();
+      else                        timestamp = messageRecord.getDateReceived();
+
+      dateText.setText(DateUtils.getExtendedRelativeTimeSpanString(getContext(), timestamp));
+
     }
-  }
-
-  private void setSentStatusIcons() {
-    final long timestamp;
-
-    if (messageRecord.isPush()) timestamp = messageRecord.getDateSent();
-    else                        timestamp = messageRecord.getDateReceived();
-
-    dateText.setText(DateUtils.getExtendedRelativeTimeSpanString(getContext(), timestamp));
   }
 
   private void setFailedStatusIcons() {
@@ -409,6 +407,13 @@ public class ConversationItem extends LinearLayout {
       mmsDownloading.setVisibility(View.GONE);
     }
 
+    if (messageRecord.isFailed() || messageRecord.isPendingSmsFallback() || messageRecord.isPending()) {
+      mmsThumbnail.setForeground(new ColorDrawable(StyleUtil.getStyledColor(getContext(), R.attr.conversation_item_mms_pending_mask)));
+    } else {
+      mmsThumbnail.setForeground(new ColorDrawable(Color.TRANSPARENT));
+    }
+
+
     slideDeck = messageRecord.getSlideDeckFuture();
     slideDeckListener = new FutureTaskListener<SlideDeck>() {
       @Override
@@ -427,7 +432,7 @@ public class ConversationItem extends LinearLayout {
                   return;
                 }
 
-                slide.setThumbnailOn(mmsThumbnail, mmsContainer);
+                slide.setThumbnailOn(context, mmsThumbnail, mmsContainer);
                 mmsThumbnail.setOnClickListener(new ThumbnailClickListener(slide));
                 mmsThumbnail.setVisibility(View.VISIBLE);
 

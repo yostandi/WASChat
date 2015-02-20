@@ -55,7 +55,7 @@
         <TextView android:id="@+id/indicator_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@id/conversation_item_parent"
+            android:layout_below="@id/bubble"
             android:layout_alignParentRight="true"
             android:paddingRight="5dip"
             android:paddingLeft="5dip"
