@@ -71,6 +71,7 @@ public class OutgoingConversationBubble extends ConversationBubble {
 
   @Override
   protected void onCreateView() {
+    setPadding(0,0,0,0);
     LayoutInflater inflater = LayoutInflater.from(getContext());
     inflater.inflate(R.layout.conversation_bubble_outgoing, this, true);
   }

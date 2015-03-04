@@ -5,12 +5,18 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content">
 
+    <View android:id="@+id/triangle_tick"
+          android:layout_width="12dp"
+          android:layout_height="15dp"
+          android:layout_alignParentRight="true"
+          android:layout_marginTop="12dp"
+          android:background="@drawable/conversation_item_sent_triangle_shape" />
+
     <FrameLayout android:id="@+id/mms_view"
                  android:layout_width="wrap_content"
                  android:layout_height="wrap_content"
-                 android:layout_alignParentRight="true"
                  android:layout_marginLeft="50dp"
-                 android:layout_marginRight="12dp"
+                 android:layout_toLeftOf="@id/triangle_tick"
                  android:background="@drawable/conversation_item_media_background"
                  android:visibility="gone"
                  tools:visibility="visible">
@@ -24,7 +30,7 @@
             android:adjustViewBounds="true"
             android:contentDescription="@string/conversation_item__mms_image_description"
             app:riv_corner_radius="@dimen/conversation_item_corner_radius"
-            tools:src="@drawable/ic_launcher_video_player"
+            tools:src="@drawable/ic_video_light"
             tools:visibility="visible" />
 
         <ImageButton
@@ -141,13 +147,5 @@
         </LinearLayout>
     </LinearLayout>
 
-    <View android:id="@+id/triangle_tick"
-          android:layout_width="12dp"
-          android:layout_height="15dp"
-          android:layout_alignParentRight="true"
-          android:layout_below="@id/mms_view"
-          android:layout_marginTop="12dp"
-          android:background="@drawable/conversation_item_sent_triangle_shape"
-          tools:visibility="gone" />
 
 </RelativeLayout>

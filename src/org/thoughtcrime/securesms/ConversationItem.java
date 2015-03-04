@@ -36,11 +36,15 @@ import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
+import android.view.animation.AlphaAnimation;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.nineoldandroids.animation.ObjectAnimator;
+import com.nineoldandroids.view.animation.AnimatorProxy;
 
 import org.thoughtcrime.securesms.ConversationFragment.SelectionClickListener;
 import org.thoughtcrime.securesms.components.ForegroundImageView;
@@ -168,6 +172,10 @@ public class ConversationItem extends LinearLayout {
     setBodyText(messageRecord);
 
     if (hasConversationBubble(messageRecord)) {
+      mmsContainer.clearAnimation();
+//      AlphaAnimation clearAnimation = new AlphaAnimation(0f, 0f);
+//      clearAnimation.setDuration(1);
+//      mmsContainer.startAnimation(clearAnimation);
       setBubbleState(messageRecord);
       setStatusIcons(messageRecord);
       setContactPhoto(messageRecord);
@@ -296,7 +304,7 @@ public class ConversationItem extends LinearLayout {
     mmsDownloadingLabel.setVisibility(View.GONE);
 
     if (messageRecord.isFailed()) {
-      dateText.setText(R.string.ConversationItem_error_sending_message);
+      dateText.setText(R.string.ConversationItem_error_not_delivered);
     } else if (messageRecord.isPendingSmsFallback() && indicatorText != null) {
       dateText.setText("");
       if (messageRecord.isPendingSecureSmsFallback()) {

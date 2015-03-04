@@ -80,10 +80,12 @@ public abstract class Slide {
   public void setThumbnailOn(Context context, ImageView imageView, View imageContainer) {
     imageView.setScaleType(ScaleType.CENTER_INSIDE);
     imageView.setImageDrawable(getThumbnail(context, imageView.getWidth(), imageView.getHeight()));
+    imageContainer.setVisibility(View.VISIBLE);
   }
 
   public void setThumbnailOn(Context context, ImageView imageView, View imageContainer, int height, int width, Drawable placeholder) {
     imageView.setImageDrawable(getThumbnail(context, width, height));
+    imageContainer.setVisibility(View.VISIBLE);
   }
 
   public Bitmap getGeneratedThumbnail() { return null; }

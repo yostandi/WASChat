@@ -29,6 +29,7 @@ import android.os.Build.VERSION_CODES;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
+import android.view.animation.AlphaAnimation;
 import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
 
@@ -174,10 +175,14 @@ public class ImageSlide extends Slide {
     }
     imageView.setImageDrawable(thumbnail);
 
-    if (mediaFadeAnimator != null) mediaFadeAnimator.end();
-    if (!fromMemory && VERSION.SDK_INT >= VERSION_CODES.HONEYCOMB) {
-        if (mediaFadeAnimator == null) mediaFadeAnimator = ObjectAnimator.ofFloat(imageContainer, "alpha", 0.0f, 1.0f).setDuration(300);
-        mediaFadeAnimator.start();
+    if (!fromMemory && VERSION.SDK_INT >= VERSION_CODES.JELLY_BEAN) {
+      imageContainer.setAlpha(0f);
+      imageContainer.animate().alpha(1f).setDuration(300);
+    } else if (!fromMemory) {
+      AlphaAnimation alpha = new AlphaAnimation(0f, 1f);
+      alpha.setDuration(300);
+      alpha.setFillAfter(true);
+      imageContainer.startAnimation(alpha);
     }
     imageContainer.setVisibility(View.VISIBLE);
   }

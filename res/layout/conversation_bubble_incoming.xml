@@ -16,8 +16,7 @@
                  android:layout_width="wrap_content"
                  android:layout_height="wrap_content"
                  android:visibility="gone"
-                 android:layout_alignParentLeft="true"
-                 android:layout_marginLeft="12dp"
+                 android:layout_toRightOf="@id/triangle_tick"
                  android:background="@drawable/conversation_item_media_background"
                  tools:visibility="visible">
 
@@ -30,7 +29,7 @@
             android:adjustViewBounds="true"
             android:contentDescription="@string/conversation_item__mms_image_description"
             app:riv_corner_radius="@dimen/conversation_item_corner_radius"
-            tools:src="@drawable/ic_launcher_video_player" />
+            tools:src="@drawable/ic_video_light" />
 
         <ImageView android:id="@+id/image_downloading"
                    android:layout_width="210dp"
