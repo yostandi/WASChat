@@ -22,27 +22,26 @@
                  tools:visibility="visible">
 
         <org.thoughtcrime.securesms.components.ForegroundImageView
-            android:id="@+id/image_view"
-            android:layout_width="wrap_content"
-            android:layout_height="210dp"
-            android:layout_gravity="center"
-            android:scaleType="centerCrop"
-            android:adjustViewBounds="true"
-            android:contentDescription="@string/conversation_item__mms_image_description"
-            app:riv_corner_radius="@dimen/conversation_item_corner_radius"
-            app:riv_border_width="3dp"
-            app:riv_border_color="?conversation_item_sent_background"
-            tools:src="@drawable/ic_video_light"
-            tools:visibility="visible" />
+                android:id="@+id/image_view"
+                android:layout_width="wrap_content"
+                android:layout_height="210dp"
+                android:layout_gravity="center"
+                android:scaleType="centerCrop"
+                android:adjustViewBounds="true"
+                android:contentDescription="@string/conversation_item__mms_image_description"
+                app:riv_corner_radius="@dimen/conversation_item_corner_radius"
+                app:riv_border_width="3dp"
+                app:riv_border_color="?conversation_item_sent_background"
+                tools:src="@drawable/ic_video_light"
+                tools:visibility="visible" />
 
-        <ImageButton
-            android:id="@+id/play_slideshow_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/mms_play_btn"
-            android:layout_gravity="center"
-            android:visibility="gone"
-            android:contentDescription="@string/conversation_item__play_button_description" />
+        <ImageButton android:id="@+id/play_slideshow_button"
+                     android:layout_width="wrap_content"
+                     android:layout_height="wrap_content"
+                     android:src="@drawable/mms_play_btn"
+                     android:layout_gravity="center"
+                     android:visibility="gone"
+                     android:contentDescription="@string/conversation_item__play_button_description" />
 
     </FrameLayout>
 
