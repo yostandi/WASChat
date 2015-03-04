@@ -35,14 +35,6 @@
                 tools:src="@drawable/ic_video_light"
                 tools:visibility="visible" />
 
-        <ImageButton android:id="@+id/play_slideshow_button"
-                     android:layout_width="wrap_content"
-                     android:layout_height="wrap_content"
-                     android:src="@drawable/mms_play_btn"
-                     android:layout_gravity="center"
-                     android:visibility="gone"
-                     android:contentDescription="@string/conversation_item__play_button_description" />
-
     </FrameLayout>
 
     <LinearLayout android:id="@+id/conversation_item_parent"

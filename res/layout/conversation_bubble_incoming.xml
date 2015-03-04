@@ -41,13 +41,6 @@
                    android:contentDescription="@string/conversation_item__mms_downloading_description"
                    android:visibility="gone" />
 
-        <ImageButton android:id="@+id/play_slideshow_button"
-                     android:layout_width="wrap_content"
-                     android:layout_height="wrap_content"
-                     android:layout_gravity="center"
-                     android:src="@drawable/mms_play_btn"
-                     android:contentDescription="@string/conversation_item__play_button_description"
-                     android:visibility="gone" />
     </FrameLayout>
 
     <LinearLayout android:id="@+id/conversation_item_parent"
