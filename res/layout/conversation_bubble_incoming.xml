@@ -29,6 +29,7 @@
             android:adjustViewBounds="true"
             android:contentDescription="@string/conversation_item__mms_image_description"
             app:riv_corner_radius="@dimen/conversation_item_corner_radius"
+            app:riv_border_width="3dp"
             tools:src="@drawable/ic_video_light" />
 
         <ImageView android:id="@+id/image_downloading"

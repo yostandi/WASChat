@@ -30,6 +30,8 @@
             android:adjustViewBounds="true"
             android:contentDescription="@string/conversation_item__mms_image_description"
             app:riv_corner_radius="@dimen/conversation_item_corner_radius"
+            app:riv_border_width="3dp"
+            app:riv_border_color="?conversation_item_sent_background"
             tools:src="@drawable/ic_video_light"
             tools:visibility="visible" />
 

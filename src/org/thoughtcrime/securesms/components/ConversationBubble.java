@@ -135,7 +135,6 @@ public abstract class ConversationBubble extends RelativeLayout {
 
   private void setMediaVisibility(@MediaState int mediaState) {
     mmsContainer.setVisibility(isMediaPresent(mediaState) ? VISIBLE : GONE);
-    triangleTick.setVisibility(isMediaPresent(mediaState) ? INVISIBLE : VISIBLE);
   }
 
   private void setMediaPendingMask(@TransportState int transportState) {
@@ -152,6 +151,7 @@ public abstract class ConversationBubble extends RelativeLayout {
     messageDrawable.setColor(foregroundColor);
     tickDrawable.setColor(foregroundColor);
     mmsContainerDrawable.setColor(foregroundColor);
+    mmsThumbnail.setBorderColor(foregroundColor);
     shadowDrawable.setColor(shadowColor);
   }
 
