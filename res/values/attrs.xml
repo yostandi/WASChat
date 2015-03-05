@@ -38,7 +38,6 @@
 
     <attr name="conversation_item_background" format="reference"/>
     <attr name="conversation_item_received_background" format="reference" />
-    <attr name="conversation_item_received_triangle_background" format="reference" />
     <attr name="conversation_item_sent_background" format="color" />
     <attr name="conversation_item_sent_pending_background" format="color" />
     <attr name="conversation_item_sent_push_background" format="color" />

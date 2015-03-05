@@ -9,15 +9,13 @@
           android:layout_width="12dp"
           android:layout_height="15dp"
           android:layout_alignParentRight="true"
-          android:layout_marginTop="12dp"
-          android:background="@drawable/conversation_item_sent_triangle_shape" />
+          android:layout_marginTop="12dp" />
 
     <FrameLayout android:id="@+id/media_bubble"
                  android:layout_width="wrap_content"
                  android:layout_height="wrap_content"
                  android:layout_marginLeft="50dp"
                  android:layout_toLeftOf="@id/triangle_tick"
-                 android:background="@drawable/conversation_item_media_background"
                  android:visibility="gone"
                  tools:visibility="visible">
 
@@ -31,7 +29,6 @@
                 android:contentDescription="@string/conversation_item__mms_image_description"
                 app:riv_corner_radius="@dimen/conversation_item_corner_radius"
                 app:riv_border_width="3dp"
-                app:riv_border_color="?conversation_item_sent_background"
                 tools:src="@drawable/ic_video_light"
                 tools:visibility="visible" />
 
@@ -43,7 +40,6 @@
                   android:layout_below="@id/media_bubble"
                   android:layout_alignParentRight="true"
                   android:layout_alignBottom="@id/media_bubble"
-                  android:background="@drawable/conversation_item_sent_shape"
                   android:paddingRight="10dip"
                   android:paddingLeft="10dip"
                   android:layout_marginLeft="50dp"

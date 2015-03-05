@@ -55,7 +55,6 @@
 
         <item name="conversation_item_background">@drawable/conversation_item_background</item>
         <item name="conversation_item_received_background">@color/conversation_item_received_background_light</item>
-        <item name="conversation_item_received_triangle_background">@drawable/conversation_item_received_triangle_shape</item>
         <item name="conversation_item_sent_background">@color/conversation_item_sent_background_light</item>
         <item name="conversation_item_sent_push_background">@color/conversation_item_sent_push_background_light</item>
         <item name="conversation_item_sent_pending_background">@color/conversation_item_sent_pending_background_light</item>
@@ -146,7 +145,6 @@
 
         <item name="conversation_item_background">@drawable/conversation_item_background_dark</item>
         <item name="conversation_item_received_background">@color/conversation_item_received_background_dark</item>
-        <item name="conversation_item_received_triangle_background">@drawable/conversation_item_received_triangle_shape_dark</item>
         <item name="conversation_item_sent_background">@color/conversation_item_sent_background_dark</item>
         <item name="conversation_item_sent_push_background">@color/conversation_item_sent_push_background_dark</item>
         <item name="conversation_item_sent_pending_background">@color/conversation_item_sent_pending_background_dark</item>
