@@ -22,7 +22,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 
 import org.thoughtcrime.securesms.R;
-import org.thoughtcrime.securesms.util.StyleUtil;
+import org.thoughtcrime.securesms.util.ThemeUtil;
 
 public class IncomingConversationBubble extends ConversationBubble {
   private static final String TAG = IncomingConversationBubble.class.getSimpleName();
@@ -60,7 +60,7 @@ public class IncomingConversationBubble extends ConversationBubble {
 
   @Override
   protected int getForegroundColor(@TransportState int transportState) {
-    return StyleUtil.getStyledColor(getContext(), R.attr.conversation_item_received_background);
+    return ThemeUtil.getStyledColor(getContext(), R.attr.conversation_item_received_background);
   }
 
   @Override

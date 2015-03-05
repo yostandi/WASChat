@@ -31,7 +31,7 @@ import android.view.View;
 import android.widget.RelativeLayout;
 
 import org.thoughtcrime.securesms.R;
-import org.thoughtcrime.securesms.util.StyleUtil;
+import org.thoughtcrime.securesms.util.ThemeUtil;
 
 public abstract class ConversationBubble extends RelativeLayout {
   private static final String TAG = ConversationBubble.class.getSimpleName();
@@ -99,8 +99,8 @@ public abstract class ConversationBubble extends RelativeLayout {
     this.mmsContainer       = findViewById(R.id.mms_view);
     this.mmsThumbnail       = (ForegroundImageView)findViewById(R.id.image_view);
 
-    this.shadowColor            = StyleUtil.getStyledColor(getContext(), R.attr.conversation_item_shadow);
-    this.mmsPendingOverlayColor = StyleUtil.getStyledColor(getContext(), R.attr.conversation_item_mms_pending_mask);
+    this.shadowColor            = ThemeUtil.getStyledColor(getContext(), R.attr.conversation_item_shadow);
+    this.mmsPendingOverlayColor = ThemeUtil.getStyledColor(getContext(), R.attr.conversation_item_mms_pending_mask);
   }
 
   protected void getDrawables() {

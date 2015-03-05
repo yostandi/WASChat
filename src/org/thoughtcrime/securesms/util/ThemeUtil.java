@@ -18,14 +18,22 @@
 package org.thoughtcrime.securesms.util;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
+import android.support.annotation.AttrRes;
 import android.util.TypedValue;
 
 public class ThemeUtil {
-  public static Drawable resolveIcon(Context c, int iconAttr)
-  {
+  public static Drawable resolveIcon(Context c, int iconAttr) {
     TypedValue out = new TypedValue();
     c.getTheme().resolveAttribute(iconAttr, out, true);
     return c.getResources().getDrawable(out.resourceId);
+  }
+
+  public static int getStyledColor(Context context, @AttrRes int attr) {
+    final TypedArray styledAttributes = context.obtainStyledAttributes(new int[]{attr});
+    final int        result           = styledAttributes.getColor(0, -1);
+    styledAttributes.recycle();
+    return result;
   }
 }
