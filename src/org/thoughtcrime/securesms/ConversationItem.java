@@ -36,15 +36,11 @@ import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
-import android.view.animation.AlphaAnimation;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.nineoldandroids.animation.ObjectAnimator;
-import com.nineoldandroids.view.animation.AnimatorProxy;
 
 import org.thoughtcrime.securesms.ConversationFragment.SelectionClickListener;
 import org.thoughtcrime.securesms.components.ForegroundImageView;
@@ -99,7 +95,6 @@ public class ConversationItem extends LinearLayout {
   private ImageView          failedImage;
   private ImageView          contactPhoto;
   private ImageView          deliveryImage;
-  private View               triangleTick;
   private ImageView          pendingIndicator;
   private ConversationBubble bubble;
 
@@ -147,7 +142,6 @@ public class ConversationItem extends LinearLayout {
     this.contactPhoto        = (ImageView)findViewById(R.id.contact_photo);
     this.deliveryImage       = (ImageView)findViewById(R.id.delivered_indicator);
     this.conversationParent  =            findViewById(R.id.conversation_item_parent);
-    this.triangleTick        =            findViewById(R.id.triangle_tick);
     this.pendingIndicator    = (ImageView)findViewById(R.id.pending_approval_indicator);
     this.bubble              = (ConversationBubble)findViewById(R.id.bubble);
 
