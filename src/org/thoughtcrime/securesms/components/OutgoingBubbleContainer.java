@@ -18,6 +18,7 @@ package org.thoughtcrime.securesms.components;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.support.annotation.DrawableRes;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 
@@ -32,10 +33,15 @@ public class OutgoingBubbleContainer extends BubbleContainer {
   private static final boolean[] CORNERS_MEDIA_CAPTIONED   = new boolean[]{true, true,  false, true};
   private static final boolean[] CORNERS_ROUNDED           = new boolean[]{true, true,  true,  true};
 
-  private static final int TRANSPORT_STYLE_ATTRIBUTES[] = new int[]{R.attr.conversation_item_sent_push_background,
+  private static final int[] TRANSPORT_STYLE_ATTRIBUTES = new int[]{R.attr.conversation_item_sent_push_background,
                                                                     R.attr.conversation_item_sent_background,
                                                                     R.attr.conversation_item_sent_pending_background,
                                                                     R.attr.conversation_item_sent_push_pending_background};
+
+  private static final int[] TRIANGLE_TICK_ATTRIBUTES = new int[]{R.attr.triangle_tick_outgoing_sent_push,
+                                                                  R.attr.triangle_tick_outgoing_sent_sms,
+                                                                  R.attr.triangle_tick_outgoing_pending_sms,
+                                                                  R.attr.triangle_tick_outgoing_pending_push};
 
   private static final Map<Integer, Integer> TRANSPORT_STYLE_MAP;
   static {
@@ -48,6 +54,7 @@ public class OutgoingBubbleContainer extends BubbleContainer {
   }
 
   private TypedArray styledDrawables;
+  private TypedArray triangleDrawables;
 
   @SuppressWarnings("UnusedDeclaration")
   public OutgoingBubbleContainer(Context context) {
@@ -73,12 +80,9 @@ public class OutgoingBubbleContainer extends BubbleContainer {
   protected void onCreateView() {
     LayoutInflater inflater = LayoutInflater.from(getContext());
     inflater.inflate(R.layout.conversation_bubble_outgoing, this, true);
-  }
 
-  @Override
-  protected void initialize() {
-    super.initialize();
-    styledDrawables = getContext().obtainStyledAttributes(TRANSPORT_STYLE_ATTRIBUTES);
+    this.styledDrawables   = getContext().obtainStyledAttributes(TRANSPORT_STYLE_ATTRIBUTES);
+    this.triangleDrawables = getContext().obtainStyledAttributes(TRIANGLE_TICK_ATTRIBUTES  );
   }
 
   @Override
@@ -94,5 +98,10 @@ public class OutgoingBubbleContainer extends BubbleContainer {
   @Override
   protected boolean[] getMediaCorners(@MediaState int mediaState) {
     return mediaState == MEDIA_STATE_CAPTIONED ? CORNERS_MEDIA_CAPTIONED : CORNERS_ROUNDED;
+  }
+
+  @Override
+  protected int getTriangleTickRes(@TransportState int transportState) {
+    return triangleDrawables.getResourceId(TRANSPORT_STYLE_MAP.get(transportState), -1);
   }
 }

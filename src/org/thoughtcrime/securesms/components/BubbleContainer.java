@@ -20,20 +20,20 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.GradientDrawable;
-import android.graphics.drawable.LayerDrawable;
-import android.graphics.drawable.RotateDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Build.VERSION_CODES;
+import android.support.annotation.DrawableRes;
 import android.support.annotation.IntDef;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 import android.widget.RelativeLayout;
 
 import org.thoughtcrime.securesms.R;
-import org.thoughtcrime.securesms.util.ThemeUtil;
+import org.thoughtcrime.securesms.util.ResUtil;
+import org.thoughtcrime.securesms.util.ViewUtil;
 
 public abstract class BubbleContainer extends RelativeLayout {
+  @SuppressWarnings("unused")
   private static final String TAG = BubbleContainer.class.getSimpleName();
 
   public static final int TRANSPORT_STATE_PUSH_SENT    = 0;
@@ -52,17 +52,11 @@ public abstract class BubbleContainer extends RelativeLayout {
   public @interface MediaState {}
 
   private View                bodyBubble;
-  private View                triangleTick;
   private View                mediaBubble;
+  private View                triangleTick;
   private ForegroundImageView media;
   private int                 shadowColor;
   private int                 mmsPendingOverlayColor;
-
-  private LayerDrawable    messageParentDrawable;
-  private GradientDrawable tickDrawable;
-  private GradientDrawable messageDrawable;
-  private GradientDrawable shadowDrawable;
-  private GradientDrawable mmsContainerDrawable;
 
   public BubbleContainer(Context context) {
     super(context);
@@ -86,51 +80,57 @@ public abstract class BubbleContainer extends RelativeLayout {
   }
 
   protected abstract void onCreateView();
-
   protected abstract int getForegroundColor(@TransportState int transportState);
-
   protected abstract boolean[] getMessageCorners(@MediaState int mediaState);
   protected abstract boolean[] getMediaCorners(@MediaState int mediaState);
+  protected abstract int getTriangleTickRes(@TransportState int transportState);
 
   protected void initialize() {
     onCreateView();
     this.bodyBubble   = findViewById(R.id.body_bubble  );
-    this.triangleTick = findViewById(R.id.triangle_tick);
     this.mediaBubble  = findViewById(R.id.media_bubble );
+    this.triangleTick = findViewById(R.id.triangle_tick);
     this.media        = (ForegroundImageView) findViewById(R.id.image_view);
 
-    this.shadowColor            = ThemeUtil.getStyledColor(getContext(), R.attr.conversation_item_shadow);
-    this.mmsPendingOverlayColor = ThemeUtil.getStyledColor(getContext(), R.attr.conversation_item_mms_pending_mask);
+    this.shadowColor            = ResUtil.getColor(getContext(), R.attr.conversation_item_shadow);
+    this.mmsPendingOverlayColor = ResUtil.getColor(getContext(), R.attr.conversation_item_mms_pending_mask);
   }
 
-  protected void getDrawables() {
-    this.messageParentDrawable = (LayerDrawable   ) bodyBubble.getBackground();
-    this.tickDrawable          = (GradientDrawable) ((RotateDrawable)triangleTick.getBackground()).getDrawable();
-    this.messageDrawable       = (GradientDrawable) messageParentDrawable.getDrawable(1);
-    this.shadowDrawable        = (GradientDrawable) messageParentDrawable.getDrawable(0);
-    this.mmsContainerDrawable  = (GradientDrawable) mediaBubble.getBackground();
-
-    this.messageParentDrawable.mutate();
-    this.messageDrawable.mutate();
-    this.shadowDrawable.mutate();
-    this.tickDrawable.mutate();
-    this.mmsContainerDrawable.mutate();
-  }
-
-  public void setTransportState(@TransportState int transportState) {
-    getDrawables();
-    setColors(transportState);
+  public void setState(@TransportState int transportState, @MediaState int mediaState) {
+    updateBodyBubble(transportState, mediaState);
+    if (isMediaPresent(mediaState)) {
+      updateMediaBubble(transportState, mediaState);
+    }
+    setAlignment(mediaState);
+    setMediaVisibility(mediaState);
     setMediaPendingMask(transportState);
   }
 
-  public void setMediaState(@MediaState int mediaState) {
-    getDrawables();
-    setCorners(mediaState);
-    setAlignment(mediaState == MEDIA_STATE_CAPTIONED);
-    setShadowDistance(mediaState == MEDIA_STATE_CAPTIONED || mediaState == MEDIA_STATE_NO_MEDIA
-                      ? getContext().getResources().getDimensionPixelSize(R.dimen.conversation_item_drop_shadow_dist)
-                      : 0);
-    setMediaVisibility(mediaState);
+  private void updateBodyBubble(@TransportState int transportState, @MediaState int mediaState) {
+    final boolean               hasShadow = mediaState == MEDIA_STATE_CAPTIONED || mediaState == MEDIA_STATE_NO_MEDIA;
+    final BubbleDrawableBuilder builder   = new BubbleDrawableBuilder();
+    final int                   color     = getForegroundColor(transportState);
+
+    final Drawable bodyDrawable = builder.setColor(color)
+                                         .setShadowColor(shadowColor)
+                                         .setCorners(getMessageCorners(mediaState))
+                                         .setHasShadow(hasShadow)
+                                         .create(getContext());
+    ViewUtil.setBackgroundSavingPadding(triangleTick, getTriangleTickRes(transportState));
+    ViewUtil.setBackgroundSavingPadding(bodyBubble, bodyDrawable);
+  }
+
+  private void updateMediaBubble(@TransportState int transportState, @MediaState int mediaState) {
+    final int                   foregroundColor = getForegroundColor(transportState);
+    final BubbleDrawableBuilder builder         = new BubbleDrawableBuilder();
+
+    final Drawable mediaDrawable = builder.setColor(foregroundColor)
+                                          .setShadowColor(shadowColor)
+                                          .setCorners(getMediaCorners(mediaState))
+                                          .setHasShadow(false)
+                                          .create(getContext());
+    ViewUtil.setBackgroundSavingPadding(mediaBubble, mediaDrawable);
+    media.setBorderColor(foregroundColor);
   }
 
   private void setMediaVisibility(@MediaState int mediaState) {
@@ -145,33 +145,9 @@ public abstract class BubbleContainer extends RelativeLayout {
     }
   }
 
-  private void setColors(@TransportState int transportState) {
-    final int foregroundColor = getForegroundColor(transportState);
-    Log.w(TAG, String.format("setting foreground to #%08X", foregroundColor));
-    messageDrawable.setColor(foregroundColor);
-    tickDrawable.setColor(foregroundColor);
-    mmsContainerDrawable.setColor(foregroundColor);
-    media.setBorderColor(foregroundColor);
-    shadowDrawable.setColor(shadowColor);
-  }
-
-  private void setCorners(@MediaState int mediaState) {
-    int radius = getContext().getResources().getDimensionPixelSize(R.dimen.conversation_item_corner_radius);
-
-    final boolean[] messageCorners = getMessageCorners(mediaState);
-    final boolean[] mediaCorners   = getMediaCorners(mediaState);
-
-    messageDrawable.setCornerRadii(cornerBooleansToRadii(messageCorners, radius));
-    mmsContainerDrawable.setCornerRadii(cornerBooleansToRadii(mediaCorners, radius));
-  }
-
-  private void setShadowDistance(final int distance) {
-    messageParentDrawable.setLayerInset(1, 0, 0, 0, distance);
-  }
-
-  private void setAlignment(final boolean extruded) {
+  private void setAlignment(@MediaState int mediaState) {
     RelativeLayout.LayoutParams parentParams = (RelativeLayout.LayoutParams) bodyBubble.getLayoutParams();
-    if (!extruded) {
+    if (mediaState != MEDIA_STATE_CAPTIONED) {
       parentParams.addRule(RelativeLayout.BELOW, 0);
       parentParams.addRule(RelativeLayout.ALIGN_BOTTOM, R.id.media_bubble);
     } else {
@@ -179,22 +155,6 @@ public abstract class BubbleContainer extends RelativeLayout {
       parentParams.addRule(RelativeLayout.ALIGN_BOTTOM, 0);
     }
     bodyBubble.setLayoutParams(parentParams);
-  }
-
-  private static float[] cornerBooleansToRadii(boolean[] corners, int radius) {
-    if (corners == null || corners.length != 4) {
-      throw new AssertionError("there are four corners in a rectangle, silly");
-    }
-
-    float[] radii = new float[8];
-    int     i     = 0;
-
-    for (boolean corner : corners) {
-      radii[i] = radii[i+1] = corner ? radius : 0;
-      i += 2;
-    }
-
-    return radii;
   }
 
   private boolean isMediaPresent(@MediaState int mediaState) {

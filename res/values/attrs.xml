@@ -46,6 +46,13 @@
     <attr name="conversation_item_sent_push_pending_background" format="reference" />
     <attr name="conversation_item_shadow" format="color" />
     <attr name="conversation_item_mms_pending_mask" format="color" />
+
+    <attr name="triangle_tick_incoming" format="reference" />
+    <attr name="triangle_tick_outgoing_sent_sms" format="reference" />
+    <attr name="triangle_tick_outgoing_sent_push" format="reference" />
+    <attr name="triangle_tick_outgoing_pending_sms" format="reference" />
+    <attr name="triangle_tick_outgoing_pending_push" format="reference" />
+
     <attr name="dialog_info_icon" format="reference" />
     <attr name="dialog_alert_icon" format="reference" />
 

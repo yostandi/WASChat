@@ -62,10 +62,10 @@ import org.thoughtcrime.securesms.mms.SlideDeck;
 import org.thoughtcrime.securesms.recipients.Recipient;
 import org.thoughtcrime.securesms.components.BubbleContainer;
 import org.thoughtcrime.securesms.util.DateUtils;
-import org.thoughtcrime.securesms.util.Dialogs;
 import org.thoughtcrime.securesms.util.Emoji;
 import org.thoughtcrime.securesms.util.FutureTaskListener;
 import org.thoughtcrime.securesms.util.ListenableFutureTask;
+import org.thoughtcrime.securesms.util.ResUtil;
 
 import java.util.Set;
 
@@ -191,37 +191,34 @@ public class ConversationItem extends LinearLayout {
   /// MessageRecord Attribute Parsers
 
   private void setBubbleState(MessageRecord messageRecord) {
-    if (bodyBubble != null) {
-      final int transportationState;
-      if ((messageRecord.isPending() || messageRecord.isFailed()) &&
-          pushDestination                                         &&
-          !messageRecord.isForcedSms())
-      {
-        transportationState = BubbleContainer.TRANSPORT_STATE_PUSH_PENDING;
-      } else if (messageRecord.isPending() ||
-                 messageRecord.isFailed()  ||
-                 messageRecord.isPendingSmsFallback())
-      {
-        transportationState = BubbleContainer.TRANSPORT_STATE_SMS_PENDING;
-      } else if (messageRecord.isPush()) {
-        transportationState = BubbleContainer.TRANSPORT_STATE_PUSH_SENT;
-      } else {
-        transportationState = BubbleContainer.TRANSPORT_STATE_SMS_SENT;
-      }
-
-      final int mediaCaptionState;
-      if (messageRecord.isMms() && !isCaptionlessMms(messageRecord)) {
-        mediaCaptionState = BubbleContainer.MEDIA_STATE_CAPTIONED;
-      } else if (messageRecord.isMms()) {
-        mediaCaptionState = BubbleContainer.MEDIA_STATE_CAPTIONLESS;
-      } else {
-        mediaCaptionState = BubbleContainer.MEDIA_STATE_NO_MEDIA;
-      }
-
-      bubbleContainer.setTransportState(transportationState);
-      bubbleContainer.setMediaState(mediaCaptionState);
+    final int transportationState;
+    if ((messageRecord.isPending() || messageRecord.isFailed()) &&
+        pushDestination                                         &&
+        !messageRecord.isForcedSms())
+    {
+      transportationState = BubbleContainer.TRANSPORT_STATE_PUSH_PENDING;
+    } else if (messageRecord.isPending() ||
+               messageRecord.isFailed()  ||
+               messageRecord.isPendingSmsFallback())
+    {
+      transportationState = BubbleContainer.TRANSPORT_STATE_SMS_PENDING;
+    } else if (messageRecord.isPush()) {
+      transportationState = BubbleContainer.TRANSPORT_STATE_PUSH_SENT;
+    } else {
+      transportationState = BubbleContainer.TRANSPORT_STATE_SMS_SENT;
     }
-  }
+
+    final int mediaCaptionState;
+    if (messageRecord.isMms() && !isCaptionlessMms(messageRecord)) {
+      mediaCaptionState = BubbleContainer.MEDIA_STATE_CAPTIONED;
+    } else if (messageRecord.isMms()) {
+      mediaCaptionState = BubbleContainer.MEDIA_STATE_CAPTIONLESS;
+    } else {
+      mediaCaptionState = BubbleContainer.MEDIA_STATE_NO_MEDIA;
+    }
+
+    bubbleContainer.setState(transportationState, mediaCaptionState);
+}
 
   private void setSelectionBackgroundDrawables(MessageRecord messageRecord) {
     int[]      attributes = new int[]{R.attr.conversation_list_item_background_selected,
@@ -540,7 +537,7 @@ public class ConversationItem extends LinearLayout {
       } else {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle(R.string.ConversationItem_view_secure_media_question);
-        builder.setIcon(Dialogs.resolveIcon(context, R.attr.dialog_alert_icon));
+        builder.setIcon(ResUtil.getDrawable(context, R.attr.dialog_alert_icon));
         builder.setCancelable(true);
         builder.setMessage(R.string.ConversationItem_this_media_has_been_stored_in_an_encrypted_database_external_viewer_warning);
         builder.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {

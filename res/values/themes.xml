@@ -64,6 +64,12 @@
         <item name="conversation_item_shadow">@color/conversation_item_received_shadow_light</item>
         <item name="conversation_item_mms_pending_mask">#99ffffff</item>
 
+        <item name="triangle_tick_incoming">@drawable/triangle_tick_incoming_light</item>
+        <item name="triangle_tick_outgoing_sent_sms">@drawable/triangle_tick_outgoing_sent_sms_light</item>
+        <item name="triangle_tick_outgoing_sent_push">@drawable/triangle_tick_outgoing_sent_push_light</item>
+        <item name="triangle_tick_outgoing_pending_sms">@drawable/triangle_tick_outgoing_pending_sms_light</item>
+        <item name="triangle_tick_outgoing_pending_push">@drawable/triangle_tick_outgoing_pending_push_light</item>
+
         <item name="dialog_info_icon">@drawable/ic_dialog_info_light</item>
         <item name="dialog_alert_icon">@drawable/ic_dialog_alert_light</item>
 
@@ -147,6 +153,13 @@
         <item name="conversation_item_sent_push_pending_background">@color/conversation_item_sent_push_pending_background_dark</item>
         <item name="conversation_item_shadow">@color/conversation_item_received_shadow_dark</item>
         <item name="conversation_item_mms_pending_mask">#99000000</item>
+
+        <item name="triangle_tick_incoming">@drawable/triangle_tick_incoming_dark</item>
+        <item name="triangle_tick_outgoing_sent_sms">@drawable/triangle_tick_outgoing_sent_sms_dark</item>
+        <item name="triangle_tick_outgoing_sent_push">@drawable/triangle_tick_outgoing_sent_push_dark</item>
+        <item name="triangle_tick_outgoing_pending_sms">@drawable/triangle_tick_outgoing_pending_sms_dark</item>
+        <item name="triangle_tick_outgoing_pending_push">@drawable/triangle_tick_outgoing_pending_push_dark</item>
+
         <item name="dialog_info_icon">@drawable/ic_dialog_info_dark</item>
         <item name="dialog_alert_icon">@drawable/ic_dialog_alert_dark</item>
 
