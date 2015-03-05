@@ -28,9 +28,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class OutgoingConversationBubble extends ConversationBubble {
-  private static final boolean[] CORNERS_MESSAGE_CAPTIONED = new boolean[]{true, false, true,  true };
+  private static final boolean[] CORNERS_MESSAGE_CAPTIONED = new boolean[]{true, false, true,  true};
   private static final boolean[] CORNERS_MEDIA_CAPTIONED   = new boolean[]{true, true,  false, true};
-  private static final boolean[] CORNERS_ROUNDED           = new boolean[]{true, true,  true,  true };
+  private static final boolean[] CORNERS_ROUNDED           = new boolean[]{true, true,  true,  true};
 
   private static final int TRANSPORT_STYLE_ATTRIBUTES[] = new int[]{R.attr.conversation_item_sent_push_background,
                                                                     R.attr.conversation_item_sent_background,
@@ -71,7 +71,6 @@ public class OutgoingConversationBubble extends ConversationBubble {
 
   @Override
   protected void onCreateView() {
-    setPadding(0,0,0,0);
     LayoutInflater inflater = LayoutInflater.from(getContext());
     inflater.inflate(R.layout.conversation_bubble_outgoing, this, true);
   }

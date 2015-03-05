@@ -173,9 +173,6 @@ public class ConversationItem extends LinearLayout {
 
     if (hasConversationBubble(messageRecord)) {
       mmsContainer.clearAnimation();
-//      AlphaAnimation clearAnimation = new AlphaAnimation(0f, 0f);
-//      clearAnimation.setDuration(1);
-//      mmsContainer.startAnimation(clearAnimation);
       setBubbleState(messageRecord);
       setStatusIcons(messageRecord);
       setContactPhoto(messageRecord);
@@ -303,26 +300,18 @@ public class ConversationItem extends LinearLayout {
     mmsDownloadButton.setVisibility(View.GONE);
     mmsDownloadingLabel.setVisibility(View.GONE);
 
-    if (messageRecord.isFailed()) {
-      dateText.setText(R.string.ConversationItem_error_not_delivered);
-    } else if (messageRecord.isPendingSmsFallback() && indicatorText != null) {
-      dateText.setText("");
-      if (messageRecord.isPendingSecureSmsFallback()) {
-        if (messageRecord.isMms()) indicatorText.setText(R.string.ConversationItem_click_to_approve_mms);
-        else                       indicatorText.setText(R.string.ConversationItem_click_to_approve_sms);
-      } else {
-        indicatorText.setText(R.string.ConversationItem_click_to_approve_unencrypted);
-      }
-    } else if (messageRecord.isPending()) {
-      dateText.setText(" ··· ");
-    } else {
-      final long timestamp;
-      if (messageRecord.isPush()) timestamp = messageRecord.getDateSent();
-      else                        timestamp = messageRecord.getDateReceived();
+    if      (messageRecord.isFailed())             setFailedStatusIcons();
+    else if (messageRecord.isPendingSmsFallback()) setFallbackStatusIcons();
+    else if (messageRecord.isPending())            dateText.setText(" ··· ");
+    else                                           setSentStatusIcons();
+  }
 
-      dateText.setText(DateUtils.getExtendedRelativeTimeSpanString(getContext(), timestamp));
+  private void setSentStatusIcons() {
+    final long timestamp;
+    if (messageRecord.isPush()) timestamp = messageRecord.getDateSent();
+    else                        timestamp = messageRecord.getDateReceived();
 
-    }
+    dateText.setText(DateUtils.getExtendedRelativeTimeSpanString(getContext(), timestamp));
   }
 
   private void setFailedStatusIcons() {
@@ -346,7 +335,7 @@ public class ConversationItem extends LinearLayout {
   private void setMinimumWidth() {
     if (indicatorText != null && indicatorText.getVisibility() == View.VISIBLE && indicatorText.getText() != null) {
       final float density = getResources().getDisplayMetrics().density;
-      conversationParent.setMinimumWidth(indicatorText.getText().length() * (int) (6.5 * density));
+      conversationParent.setMinimumWidth(indicatorText.getText().length() * (int)(6.5 * density));
     } else {
       conversationParent.setMinimumWidth(0);
     }
@@ -414,13 +403,6 @@ public class ConversationItem extends LinearLayout {
     if (!messageRecord.isOutgoing()) {
       mmsDownloading.setVisibility(View.GONE);
     }
-
-    if (messageRecord.isFailed() || messageRecord.isPendingSmsFallback() || messageRecord.isPending()) {
-      mmsThumbnail.setForeground(new ColorDrawable(StyleUtil.getStyledColor(getContext(), R.attr.conversation_item_mms_pending_mask)));
-    } else {
-      mmsThumbnail.setForeground(new ColorDrawable(Color.TRANSPARENT));
-    }
-
 
     slideDeck = messageRecord.getSlideDeckFuture();
     slideDeckListener = new FutureTaskListener<SlideDeck>() {
