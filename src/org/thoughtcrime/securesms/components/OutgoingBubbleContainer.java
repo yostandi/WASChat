@@ -27,7 +27,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-public class OutgoingConversationBubble extends ConversationBubble {
+public class OutgoingBubbleContainer extends BubbleContainer {
   private static final boolean[] CORNERS_MESSAGE_CAPTIONED = new boolean[]{true, false, true,  true};
   private static final boolean[] CORNERS_MEDIA_CAPTIONED   = new boolean[]{true, true,  false, true};
   private static final boolean[] CORNERS_ROUNDED           = new boolean[]{true, true,  true,  true};
@@ -50,22 +50,22 @@ public class OutgoingConversationBubble extends ConversationBubble {
   private TypedArray styledDrawables;
 
   @SuppressWarnings("UnusedDeclaration")
-  public OutgoingConversationBubble(Context context) {
+  public OutgoingBubbleContainer(Context context) {
     super(context);
   }
 
   @SuppressWarnings("UnusedDeclaration")
-  public OutgoingConversationBubble(Context context, AttributeSet attrs) {
+  public OutgoingBubbleContainer(Context context, AttributeSet attrs) {
     super(context, attrs);
   }
 
   @SuppressWarnings("UnusedDeclaration")
-  public OutgoingConversationBubble(Context context, AttributeSet attrs, int defStyleAttr) {
+  public OutgoingBubbleContainer(Context context, AttributeSet attrs, int defStyleAttr) {
     super(context, attrs, defStyleAttr);
   }
 
   @SuppressWarnings("UnusedDeclaration")
-  public OutgoingConversationBubble(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+  public OutgoingBubbleContainer(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
     super(context, attrs, defStyleAttr, defStyleRes);
   }
 

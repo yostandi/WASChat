@@ -33,8 +33,8 @@ import android.widget.RelativeLayout;
 import org.thoughtcrime.securesms.R;
 import org.thoughtcrime.securesms.util.ThemeUtil;
 
-public abstract class ConversationBubble extends RelativeLayout {
-  private static final String TAG = ConversationBubble.class.getSimpleName();
+public abstract class BubbleContainer extends RelativeLayout {
+  private static final String TAG = BubbleContainer.class.getSimpleName();
 
   public static final int TRANSPORT_STATE_PUSH_SENT    = 0;
   public static final int TRANSPORT_STATE_SMS_SENT     = 1;
@@ -51,10 +51,10 @@ public abstract class ConversationBubble extends RelativeLayout {
   @IntDef({MEDIA_STATE_NO_MEDIA, MEDIA_STATE_CAPTIONLESS, MEDIA_STATE_CAPTIONED})
   public @interface MediaState {}
 
-  private View                conversationParent;
+  private View                bodyBubble;
   private View                triangleTick;
-  private View                mmsContainer;
-  private ForegroundImageView mmsThumbnail;
+  private View                mediaBubble;
+  private ForegroundImageView media;
   private int                 shadowColor;
   private int                 mmsPendingOverlayColor;
 
@@ -64,23 +64,23 @@ public abstract class ConversationBubble extends RelativeLayout {
   private GradientDrawable shadowDrawable;
   private GradientDrawable mmsContainerDrawable;
 
-  public ConversationBubble(Context context) {
+  public BubbleContainer(Context context) {
     super(context);
     initialize();
   }
 
-  public ConversationBubble(Context context, AttributeSet attrs) {
+  public BubbleContainer(Context context, AttributeSet attrs) {
     super(context, attrs);
     initialize();
   }
 
-  public ConversationBubble(Context context, AttributeSet attrs, int defStyleAttr) {
+  public BubbleContainer(Context context, AttributeSet attrs, int defStyleAttr) {
     super(context, attrs, defStyleAttr);
     initialize();
   }
 
   @TargetApi(VERSION_CODES.LOLLIPOP)
-  public ConversationBubble(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+  public BubbleContainer(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
     super(context, attrs, defStyleAttr, defStyleRes);
     initialize();
   }
@@ -94,21 +94,21 @@ public abstract class ConversationBubble extends RelativeLayout {
 
   protected void initialize() {
     onCreateView();
-    this.conversationParent = findViewById(R.id.conversation_item_parent);
-    this.triangleTick       = findViewById(R.id.triangle_tick);
-    this.mmsContainer       = findViewById(R.id.mms_view);
-    this.mmsThumbnail       = (ForegroundImageView)findViewById(R.id.image_view);
+    this.bodyBubble   = findViewById(R.id.body_bubble  );
+    this.triangleTick = findViewById(R.id.triangle_tick);
+    this.mediaBubble  = findViewById(R.id.media_bubble );
+    this.media        = (ForegroundImageView) findViewById(R.id.image_view);
 
     this.shadowColor            = ThemeUtil.getStyledColor(getContext(), R.attr.conversation_item_shadow);
     this.mmsPendingOverlayColor = ThemeUtil.getStyledColor(getContext(), R.attr.conversation_item_mms_pending_mask);
   }
 
   protected void getDrawables() {
-    this.messageParentDrawable = (LayerDrawable   ) conversationParent.getBackground();
+    this.messageParentDrawable = (LayerDrawable   ) bodyBubble.getBackground();
     this.tickDrawable          = (GradientDrawable) ((RotateDrawable)triangleTick.getBackground()).getDrawable();
     this.messageDrawable       = (GradientDrawable) messageParentDrawable.getDrawable(1);
     this.shadowDrawable        = (GradientDrawable) messageParentDrawable.getDrawable(0);
-    this.mmsContainerDrawable  = (GradientDrawable) mmsContainer.getBackground();
+    this.mmsContainerDrawable  = (GradientDrawable) mediaBubble.getBackground();
 
     this.messageParentDrawable.mutate();
     this.messageDrawable.mutate();
@@ -134,14 +134,14 @@ public abstract class ConversationBubble extends RelativeLayout {
   }
 
   private void setMediaVisibility(@MediaState int mediaState) {
-    mmsContainer.setVisibility(isMediaPresent(mediaState) ? VISIBLE : GONE);
+    mediaBubble.setVisibility(isMediaPresent(mediaState) ? VISIBLE : GONE);
   }
 
   private void setMediaPendingMask(@TransportState int transportState) {
     if (isPending(transportState)) {
-      mmsThumbnail.setForeground(new ColorDrawable(mmsPendingOverlayColor));
+      media.setForeground(new ColorDrawable(mmsPendingOverlayColor));
     } else {
-      mmsThumbnail.setForeground(new ColorDrawable(Color.TRANSPARENT));
+      media.setForeground(new ColorDrawable(Color.TRANSPARENT));
     }
   }
 
@@ -151,7 +151,7 @@ public abstract class ConversationBubble extends RelativeLayout {
     messageDrawable.setColor(foregroundColor);
     tickDrawable.setColor(foregroundColor);
     mmsContainerDrawable.setColor(foregroundColor);
-    mmsThumbnail.setBorderColor(foregroundColor);
+    media.setBorderColor(foregroundColor);
     shadowDrawable.setColor(shadowColor);
   }
 
@@ -170,15 +170,15 @@ public abstract class ConversationBubble extends RelativeLayout {
   }
 
   private void setAlignment(final boolean extruded) {
-    RelativeLayout.LayoutParams parentParams = (RelativeLayout.LayoutParams)conversationParent.getLayoutParams();
+    RelativeLayout.LayoutParams parentParams = (RelativeLayout.LayoutParams) bodyBubble.getLayoutParams();
     if (!extruded) {
       parentParams.addRule(RelativeLayout.BELOW, 0);
-      parentParams.addRule(RelativeLayout.ALIGN_BOTTOM, R.id.mms_view);
+      parentParams.addRule(RelativeLayout.ALIGN_BOTTOM, R.id.media_bubble);
     } else {
-      parentParams.addRule(RelativeLayout.BELOW, R.id.mms_view);
+      parentParams.addRule(RelativeLayout.BELOW, R.id.media_bubble);
       parentParams.addRule(RelativeLayout.ALIGN_BOTTOM, 0);
     }
-    conversationParent.setLayoutParams(parentParams);
+    bodyBubble.setLayoutParams(parentParams);
   }
 
   private static float[] cornerBooleansToRadii(boolean[] corners, int radius) {

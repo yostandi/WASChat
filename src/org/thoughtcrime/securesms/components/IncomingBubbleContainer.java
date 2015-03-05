@@ -24,30 +24,30 @@ import android.view.LayoutInflater;
 import org.thoughtcrime.securesms.R;
 import org.thoughtcrime.securesms.util.ThemeUtil;
 
-public class IncomingConversationBubble extends ConversationBubble {
-  private static final String TAG = IncomingConversationBubble.class.getSimpleName();
+public class IncomingBubbleContainer extends BubbleContainer {
+  private static final String TAG = IncomingBubbleContainer.class.getSimpleName();
 
   private static final boolean[] CORNERS_MESSAGE_CAPTIONED = new boolean[]{false, true, true, true };
   private static final boolean[] CORNERS_MEDIA_CAPTIONED   = new boolean[]{true,  true, true, false};
   private static final boolean[] CORNERS_ROUNDED           = new boolean[]{true,  true, true, true };
 
   @SuppressWarnings("UnusedDeclaration")
-  public IncomingConversationBubble(Context context) {
+  public IncomingBubbleContainer(Context context) {
     super(context);
   }
 
   @SuppressWarnings("UnusedDeclaration")
-  public IncomingConversationBubble(Context context, AttributeSet attrs) {
+  public IncomingBubbleContainer(Context context, AttributeSet attrs) {
     super(context, attrs);
   }
 
   @SuppressWarnings("UnusedDeclaration")
-  public IncomingConversationBubble(Context context, AttributeSet attrs, int defStyleAttr) {
+  public IncomingBubbleContainer(Context context, AttributeSet attrs, int defStyleAttr) {
     super(context, attrs, defStyleAttr);
   }
 
   @SuppressWarnings("UnusedDeclaration")
-  public IncomingConversationBubble(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+  public IncomingBubbleContainer(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
     super(context, attrs, defStyleAttr, defStyleRes);
   }
 

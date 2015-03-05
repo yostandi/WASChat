@@ -12,7 +12,7 @@
           android:layout_alignParentLeft="true"
           android:background="?conversation_item_received_triangle_background" />
 
-    <FrameLayout android:id="@+id/mms_view"
+    <FrameLayout android:id="@+id/media_bubble"
                  android:layout_width="wrap_content"
                  android:layout_height="wrap_content"
                  android:visibility="gone"
@@ -43,11 +43,11 @@
 
     </FrameLayout>
 
-    <LinearLayout android:id="@+id/conversation_item_parent"
+    <LinearLayout android:id="@+id/body_bubble"
                   android:layout_width="wrap_content"
                   android:layout_height="wrap_content"
                   android:layout_toRightOf="@id/triangle_tick"
-                  android:layout_below="@id/mms_view"
+                  android:layout_below="@id/media_bubble"
                   android:background="@drawable/conversation_item_received_shape"
                   android:orientation="vertical">
 

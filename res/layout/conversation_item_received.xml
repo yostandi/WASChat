@@ -38,7 +38,7 @@
             android:contentDescription="@string/conversation_item_received__contact_photo_description"
             android:scaleType="centerCrop" />
 
-        <org.thoughtcrime.securesms.components.IncomingConversationBubble
+        <org.thoughtcrime.securesms.components.IncomingBubbleContainer
                 android:id="@+id/bubble"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

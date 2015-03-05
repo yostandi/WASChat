@@ -60,7 +60,7 @@ import org.thoughtcrime.securesms.mms.PartAuthority;
 import org.thoughtcrime.securesms.mms.Slide;
 import org.thoughtcrime.securesms.mms.SlideDeck;
 import org.thoughtcrime.securesms.recipients.Recipient;
-import org.thoughtcrime.securesms.components.ConversationBubble;
+import org.thoughtcrime.securesms.components.BubbleContainer;
 import org.thoughtcrime.securesms.util.DateUtils;
 import org.thoughtcrime.securesms.util.Dialogs;
 import org.thoughtcrime.securesms.util.Emoji;
@@ -86,21 +86,21 @@ public class ConversationItem extends LinearLayout {
   private boolean       groupThread;
   private boolean       pushDestination;
 
-  private View               conversationParent;
-  private TextView           bodyText;
-  private TextView           dateText;
-  private TextView           indicatorText;
-  private TextView           groupStatusText;
-  private ImageView          secureImage;
-  private ImageView          failedImage;
-  private ImageView          contactPhoto;
-  private ImageView          deliveryImage;
-  private ImageView          pendingIndicator;
-  private ConversationBubble bubble;
+  private View            bodyBubble;
+  private TextView        bodyText;
+  private TextView        dateText;
+  private TextView        indicatorText;
+  private TextView        groupStatusText;
+  private ImageView       secureImage;
+  private ImageView       failedImage;
+  private ImageView       contactPhoto;
+  private ImageView       deliveryImage;
+  private ImageView       pendingIndicator;
+  private BubbleContainer bubbleContainer;
 
   private Set<MessageRecord>              batchSelected;
   private SelectionClickListener          selectionClickListener;
-  private View                            mmsContainer;
+  private View                            mediaBubble;
   private ImageView                       mmsDownloading;
   private ForegroundImageView             mmsThumbnail;
   private Button                          mmsDownloadButton;
@@ -134,16 +134,16 @@ public class ConversationItem extends LinearLayout {
     this.groupStatusText     = (TextView) findViewById(R.id.group_message_status);
     this.secureImage         = (ImageView)findViewById(R.id.sms_secure_indicator);
     this.failedImage         = (ImageView)findViewById(R.id.sms_failed_indicator);
-    this.mmsContainer        =            findViewById(R.id.mms_view);
-    this.mmsThumbnail        = (ForegroundImageView)findViewById(R.id.image_view);
+    this.mediaBubble         =            findViewById(R.id.media_bubble);
     this.mmsDownloading      = (ImageView)findViewById(R.id.image_downloading);
     this.mmsDownloadButton   = (Button)   findViewById(R.id.mms_download_button);
     this.mmsDownloadingLabel = (TextView) findViewById(R.id.mms_label_downloading);
     this.contactPhoto        = (ImageView)findViewById(R.id.contact_photo);
     this.deliveryImage       = (ImageView)findViewById(R.id.delivered_indicator);
-    this.conversationParent  =            findViewById(R.id.conversation_item_parent);
+    this.bodyBubble          =            findViewById(R.id.body_bubble);
     this.pendingIndicator    = (ImageView)findViewById(R.id.pending_approval_indicator);
-    this.bubble              = (ConversationBubble)findViewById(R.id.bubble);
+    this.bubbleContainer     = (BubbleContainer)findViewById(R.id.bubble);
+    this.mmsThumbnail        = (ForegroundImageView)findViewById(R.id.image_view);
 
     setOnClickListener(clickListener);
     if (mmsDownloadButton != null) mmsDownloadButton.setOnClickListener(mmsDownloadClickListener);
@@ -165,7 +165,6 @@ public class ConversationItem extends LinearLayout {
     setBodyText(messageRecord);
 
     if (hasConversationBubble(messageRecord)) {
-      mmsContainer.clearAnimation();
       setBubbleState(messageRecord);
       setStatusIcons(messageRecord);
       setContactPhoto(messageRecord);
@@ -192,35 +191,35 @@ public class ConversationItem extends LinearLayout {
   /// MessageRecord Attribute Parsers
 
   private void setBubbleState(MessageRecord messageRecord) {
-    if (conversationParent != null) {
+    if (bodyBubble != null) {
       final int transportationState;
       if ((messageRecord.isPending() || messageRecord.isFailed()) &&
           pushDestination                                         &&
           !messageRecord.isForcedSms())
       {
-        transportationState = ConversationBubble.TRANSPORT_STATE_PUSH_PENDING;
+        transportationState = BubbleContainer.TRANSPORT_STATE_PUSH_PENDING;
       } else if (messageRecord.isPending() ||
                  messageRecord.isFailed()  ||
                  messageRecord.isPendingSmsFallback())
       {
-        transportationState = ConversationBubble.TRANSPORT_STATE_SMS_PENDING;
+        transportationState = BubbleContainer.TRANSPORT_STATE_SMS_PENDING;
       } else if (messageRecord.isPush()) {
-        transportationState = ConversationBubble.TRANSPORT_STATE_PUSH_SENT;
+        transportationState = BubbleContainer.TRANSPORT_STATE_PUSH_SENT;
       } else {
-        transportationState = ConversationBubble.TRANSPORT_STATE_SMS_SENT;
+        transportationState = BubbleContainer.TRANSPORT_STATE_SMS_SENT;
       }
 
       final int mediaCaptionState;
       if (messageRecord.isMms() && !isCaptionlessMms(messageRecord)) {
-        mediaCaptionState = ConversationBubble.MEDIA_STATE_CAPTIONED;
+        mediaCaptionState = BubbleContainer.MEDIA_STATE_CAPTIONED;
       } else if (messageRecord.isMms()) {
-        mediaCaptionState = ConversationBubble.MEDIA_STATE_CAPTIONLESS;
+        mediaCaptionState = BubbleContainer.MEDIA_STATE_CAPTIONLESS;
       } else {
-        mediaCaptionState = ConversationBubble.MEDIA_STATE_NO_MEDIA;
+        mediaCaptionState = BubbleContainer.MEDIA_STATE_NO_MEDIA;
       }
 
-      bubble.setTransportState(transportationState);
-      bubble.setMediaState(mediaCaptionState);
+      bubbleContainer.setTransportState(transportationState);
+      bubbleContainer.setMediaState(mediaCaptionState);
     }
   }
 
@@ -267,6 +266,7 @@ public class ConversationItem extends LinearLayout {
   }
 
   private void setMediaAttributes(MessageRecord messageRecord) {
+    mediaBubble.clearAnimation();
     if (messageRecord.isMmsNotification()) {
       setNotificationMmsAttributes((NotificationMmsMessageRecord) messageRecord);
     } else if (messageRecord.isMms()) {
@@ -328,9 +328,9 @@ public class ConversationItem extends LinearLayout {
   private void setMinimumWidth() {
     if (indicatorText != null && indicatorText.getVisibility() == View.VISIBLE && indicatorText.getText() != null) {
       final float density = getResources().getDisplayMetrics().density;
-      conversationParent.setMinimumWidth(indicatorText.getText().length() * (int)(6.5 * density));
+      bodyBubble.setMinimumWidth(indicatorText.getText().length() * (int) (6.5 * density));
     } else {
-      conversationParent.setMinimumWidth(0);
+      bodyBubble.setMinimumWidth(0);
     }
   }
 
@@ -388,7 +388,7 @@ public class ConversationItem extends LinearLayout {
   private void setMediaMmsAttributes(MediaMmsMessageRecord messageRecord) {
     if (messageRecord.getPartCount() > 0) {
       mmsThumbnail.setVisibility(View.VISIBLE);
-      mmsContainer.setVisibility(View.INVISIBLE);
+      mediaBubble.setVisibility(View.INVISIBLE);
       mmsThumbnail.setImageDrawable(new ColorDrawable(Color.TRANSPARENT));
     } else {
       mmsThumbnail.setVisibility(View.GONE);
@@ -411,11 +411,11 @@ public class ConversationItem extends LinearLayout {
               if (slide.hasImage()) {
                 if (slide.getPart().isPendingPush()) {
                   mmsDownloading.setVisibility(View.VISIBLE);
-                  mmsContainer.setVisibility(View.VISIBLE);
+                  mediaBubble.setVisibility(View.VISIBLE);
                   return;
                 }
 
-                slide.setThumbnailOn(context, mmsThumbnail, mmsContainer);
+                slide.setThumbnailOn(context, mmsThumbnail, mediaBubble);
                 mmsThumbnail.setOnClickListener(new ThumbnailClickListener(slide));
                 mmsThumbnail.setVisibility(View.VISIBLE);
 
@@ -424,7 +424,7 @@ public class ConversationItem extends LinearLayout {
             }
 
             mmsThumbnail.setVisibility(View.GONE);
-            mmsContainer.setVisibility(View.GONE);
+            mediaBubble.setVisibility(View.GONE);
           }
         });
       }

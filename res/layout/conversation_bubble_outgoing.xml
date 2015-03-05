@@ -12,7 +12,7 @@
           android:layout_marginTop="12dp"
           android:background="@drawable/conversation_item_sent_triangle_shape" />
 
-    <FrameLayout android:id="@+id/mms_view"
+    <FrameLayout android:id="@+id/media_bubble"
                  android:layout_width="wrap_content"
                  android:layout_height="wrap_content"
                  android:layout_marginLeft="50dp"
@@ -37,12 +37,12 @@
 
     </FrameLayout>
 
-    <LinearLayout android:id="@+id/conversation_item_parent"
+    <LinearLayout android:id="@+id/body_bubble"
                   android:layout_width="wrap_content"
                   android:layout_height="wrap_content"
-                  android:layout_below="@id/mms_view"
+                  android:layout_below="@id/media_bubble"
                   android:layout_alignParentRight="true"
-                  android:layout_alignBottom="@id/mms_view"
+                  android:layout_alignBottom="@id/media_bubble"
                   android:background="@drawable/conversation_item_sent_shape"
                   android:paddingRight="10dip"
                   android:paddingLeft="10dip"
