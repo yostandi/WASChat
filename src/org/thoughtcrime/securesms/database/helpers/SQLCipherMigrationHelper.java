@@ -19,7 +19,7 @@ import org.thoughtcrime.securesms.crypto.AttachmentSecretProvider;
 import org.thoughtcrime.securesms.crypto.MasterCipher;
 import org.thoughtcrime.securesms.crypto.MasterSecret;
 import org.thoughtcrime.securesms.crypto.MasterSecretUtil;
-import org.thoughtcrime.securesms.service.GenericForegroundService;
+import org.thoughtcrime.securesms.service.ForegroundTaskManager;
 import org.thoughtcrime.securesms.util.Base64;
 import org.thoughtcrime.securesms.util.TextSecurePreferences;
 import org.whispersystems.libsignal.InvalidMessageException;
@@ -41,7 +41,7 @@ public class SQLCipherMigrationHelper {
   {
     modernDb.beginTransaction();
     try {
-      GenericForegroundService.startForegroundTask(context, context.getString(R.string.SQLCipherMigrationHelper_migrating_signal_database));
+      ForegroundTaskManager.getInstance(context).startTask(context.getString(R.string.SQLCipherMigrationHelper_migrating_signal_database));
       copyTable("identities", legacyDb, modernDb, null);
       copyTable("push", legacyDb, modernDb, null);
       copyTable("groups", legacyDb, modernDb, null);
@@ -50,7 +50,7 @@ public class SQLCipherMigrationHelper {
       modernDb.setTransactionSuccessful();
     } finally {
       modernDb.endTransaction();
-      GenericForegroundService.stopForegroundTask(context);
+      ForegroundTaskManager.getInstance(context).stopTask();
     }
   }
 
@@ -66,7 +66,7 @@ public class SQLCipherMigrationHelper {
     modernDb.beginTransaction();
 
     try {
-      GenericForegroundService.startForegroundTask(context, context.getString(R.string.SQLCipherMigrationHelper_migrating_signal_database));
+      ForegroundTaskManager.getInstance(context).startTask(context.getString(R.string.SQLCipherMigrationHelper_migrating_signal_database));
       int total = 5000;
 
       copyTable("sms", legacyDb, modernDb, (row, progress) -> {
@@ -175,7 +175,7 @@ public class SQLCipherMigrationHelper {
       modernDb.setTransactionSuccessful();
     } finally {
       modernDb.endTransaction();
-      GenericForegroundService.stopForegroundTask(context);
+      ForegroundTaskManager.getInstance(context).stopTask();
     }
   }
 

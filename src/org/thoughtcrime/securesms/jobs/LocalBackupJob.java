@@ -4,6 +4,8 @@ package org.thoughtcrime.securesms.jobs;
 import android.Manifest;
 import android.content.Context;
 import android.support.annotation.NonNull;
+
+import org.thoughtcrime.securesms.jobmanager.Job;
 import org.thoughtcrime.securesms.logging.Log;
 
 import org.thoughtcrime.securesms.R;
@@ -14,7 +16,7 @@ import org.thoughtcrime.securesms.database.NoExternalStorageException;
 import org.thoughtcrime.securesms.jobmanager.JobParameters;
 import org.thoughtcrime.securesms.notifications.NotificationChannels;
 import org.thoughtcrime.securesms.permissions.Permissions;
-import org.thoughtcrime.securesms.service.GenericForegroundService;
+import org.thoughtcrime.securesms.service.ForegroundTaskManager;
 import org.thoughtcrime.securesms.util.BackupUtil;
 import org.thoughtcrime.securesms.util.StorageUtil;
 import org.thoughtcrime.securesms.util.TextSecurePreferences;
@@ -26,7 +28,7 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
-public class LocalBackupJob extends ContextJob {
+public class LocalBackupJob extends Job {
 
   private static final String TAG = LocalBackupJob.class.getSimpleName();
 
@@ -48,9 +50,8 @@ public class LocalBackupJob extends ContextJob {
       throw new IOException("No external storage permission!");
     }
 
-    GenericForegroundService.startForegroundTask(context,
-                                                 context.getString(R.string.LocalBackupJob_creating_backup),
-                                                 NotificationChannels.BACKUPS);
+    ForegroundTaskManager.getInstance(context).startTask(context.getString(R.string.LocalBackupJob_creating_backup),
+                                                         NotificationChannels.BACKUPS);
 
     try {
       String backupPassword  = TextSecurePreferences.getBackupPassphrase(context);
@@ -82,7 +83,7 @@ public class LocalBackupJob extends ContextJob {
 
       BackupUtil.deleteOldBackups();
     } finally {
-      GenericForegroundService.stopForegroundTask(context);
+      ForegroundTaskManager.getInstance(context).stopTask();
     }
   }
 

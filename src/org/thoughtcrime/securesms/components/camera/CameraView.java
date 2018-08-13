@@ -98,7 +98,7 @@ public class CameraView extends ViewGroup {
     if (state != State.PAUSED) return;
     state = State.RESUMED;
     Log.i(TAG, "onResume() queued");
-    enqueueTask(new SerialAsyncTask<Void>() {
+    enqueueTask(new SerialAsyncTask<Void>(getContext()) {
       @Override
       protected
       @Nullable
@@ -140,7 +140,7 @@ public class CameraView extends ViewGroup {
     state = State.PAUSED;
     Log.i(TAG, "onPause() queued");
 
-    enqueueTask(new SerialAsyncTask<Void>() {
+    enqueueTask(new SerialAsyncTask<Void>(getContext()) {
       private Optional<Camera> cameraToDestroy;
 
       @Override
@@ -230,7 +230,7 @@ public class CameraView extends ViewGroup {
   }
 
   public void setPreviewCallback(final @NonNull PreviewCallback previewCallback) {
-    enqueueTask(new PostInitializationTask<Void>() {
+    enqueueTask(new PostInitializationTask<Void>(getContext()) {
       @Override
       protected void onPostMain(Void avoid) {
         if (camera.isPresent()) {
@@ -289,7 +289,7 @@ public class CameraView extends ViewGroup {
     displayOrientation = CameraUtils.getCameraDisplayOrientation(getActivity(), getCameraInfo());
     camera.setDisplayOrientation(displayOrientation);
     camera.setParameters(parameters);
-    enqueueTask(new PostInitializationTask<Void>() {
+    enqueueTask(new PostInitializationTask<Void>(getContext()) {
       @Override
       protected Void onRunBackground() {
         try {
@@ -490,8 +490,8 @@ public class CameraView extends ViewGroup {
 
   private static abstract class SerialAsyncTask<Result> extends Job {
 
-    public SerialAsyncTask() {
-      super(JobParameters.newBuilder().withGroupId(CameraView.class.getSimpleName()).create());
+    public SerialAsyncTask(Context context) {
+      super(context, JobParameters.newBuilder().withGroupId(CameraView.class.getSimpleName()).create());
     }
 
     @Override public void onAdded() {}
@@ -530,6 +530,11 @@ public class CameraView extends ViewGroup {
   }
 
   private abstract class PostInitializationTask<Result> extends SerialAsyncTask<Result> {
+
+    public PostInitializationTask(Context context) {
+      super(context);
+    }
+
     @Override protected void onWait() throws PreconditionsNotMetException {
       synchronized (CameraView.this) {
         if (!camera.isPresent()) {

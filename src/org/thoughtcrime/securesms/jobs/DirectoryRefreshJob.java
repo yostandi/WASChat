@@ -4,6 +4,8 @@ import android.content.Context;
 import android.os.PowerManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+
+import org.thoughtcrime.securesms.jobmanager.Job;
 import org.thoughtcrime.securesms.logging.Log;
 
 import org.thoughtcrime.securesms.jobmanager.JobParameters;
@@ -14,7 +16,7 @@ import org.whispersystems.signalservice.api.push.exceptions.PushNetworkException
 
 import java.io.IOException;
 
-public class DirectoryRefreshJob extends ContextJob {
+public class DirectoryRefreshJob extends Job {
 
   private static final String TAG = DirectoryRefreshJob.class.getSimpleName();
 

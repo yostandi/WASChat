@@ -28,12 +28,10 @@ public class TrimThreadJob extends Job {
 
   private static final String TAG = TrimThreadJob.class.getSimpleName();
 
-  private final Context context;
-  private final long    threadId;
+  private final long threadId;
 
   public TrimThreadJob(Context context, long threadId) {
-    super(JobParameters.newBuilder().withGroupId(TrimThreadJob.class.getSimpleName()).create());
-    this.context  = context;
+    super(context, JobParameters.newBuilder().withGroupId(TrimThreadJob.class.getSimpleName()).create());
     this.threadId = threadId;
   }
 

@@ -1,6 +1,9 @@
 package org.thoughtcrime.securesms.jobs;
 
 import android.content.Context;
+
+import org.thoughtcrime.securesms.R;
+import org.thoughtcrime.securesms.jobmanager.Job;
 import org.thoughtcrime.securesms.logging.Log;
 import android.util.Pair;
 
@@ -17,7 +20,7 @@ import org.thoughtcrime.securesms.jobmanager.JobParameters;
 import org.thoughtcrime.securesms.recipients.Recipient;
 import org.thoughtcrime.securesms.util.Util;
 
-public class MmsReceiveJob extends ContextJob {
+public class MmsReceiveJob extends Job {
 
   private static final long serialVersionUID = 1L;
 
@@ -81,6 +84,11 @@ public class MmsReceiveJob extends ContextJob {
   @Override
   public boolean onShouldRetry(Exception exception) {
     return false;
+  }
+
+  @Override
+  protected String getDescription() {
+    return context.getString(R.string.JobDescription_receiving_message);
   }
 
   private boolean isBlocked(GenericPdu pdu) {

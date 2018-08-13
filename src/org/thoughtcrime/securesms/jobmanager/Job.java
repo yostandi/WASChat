@@ -16,9 +16,14 @@
  */
 package org.thoughtcrime.securesms.jobmanager;
 
+import android.content.Context;
 import android.os.PowerManager;
 
+import org.thoughtcrime.securesms.ApplicationContext;
+import org.thoughtcrime.securesms.R;
+import org.thoughtcrime.securesms.jobmanager.dependencies.ContextDependent;
 import org.thoughtcrime.securesms.jobmanager.requirements.Requirement;
+import org.thoughtcrime.securesms.service.ForegroundTaskManager;
 
 import java.io.Serializable;
 import java.util.List;
@@ -27,7 +32,7 @@ import java.util.List;
  * An abstract class representing a unit of work that can be scheduled with
  * the JobManager. This should be extended to implement tasks.
  */
-public abstract class Job implements Serializable {
+public abstract class Job implements Serializable, ContextDependent {
 
   private final JobParameters parameters;
 
@@ -36,8 +41,20 @@ public abstract class Job implements Serializable {
   private transient long                  lastRunTime;
   private transient PowerManager.WakeLock wakeLock;
 
-  public Job(JobParameters parameters) {
+  protected transient Context context;
+
+  public Job(Context context, JobParameters parameters) {
+    this.context    = context;
     this.parameters = parameters;
+  }
+
+  @Override
+  public void setContext(Context context) {
+    this.context = context;
+  }
+
+  protected Context getContext() {
+    return context;
   }
 
   public List<Requirement> getRequirements() {
@@ -128,6 +145,15 @@ public abstract class Job implements Serializable {
    */
   public abstract void onAdded();
 
+  public void run() throws Exception {
+    ForegroundTaskManager.getInstance(context).startTask(getDescription());
+    try {
+      onRun();
+    } finally {
+      ForegroundTaskManager.getInstance(context).stopTask();
+    }
+  }
+
   /**
    * Called to actually execute the job.
    * @throws Exception
@@ -149,6 +175,10 @@ public abstract class Job implements Serializable {
    */
   public abstract void onCanceled();
 
-
-
+  /**
+   * @return A text description of the job that will be shown if the job runs while the app isn't open.
+   */
+  protected String getDescription() {
+    return context.getString(R.string.JobDescription_generic);
+  }
 }

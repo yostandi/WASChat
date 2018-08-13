@@ -4,6 +4,8 @@ package org.thoughtcrime.securesms.jobs;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
+
+import org.thoughtcrime.securesms.jobmanager.Job;
 import org.thoughtcrime.securesms.logging.Log;
 
 import org.thoughtcrime.securesms.ApplicationContext;
@@ -29,7 +31,7 @@ import java.util.List;
 
 import javax.inject.Inject;
 
-public class RetrieveProfileJob extends ContextJob implements InjectableType {
+public class RetrieveProfileJob extends Job implements InjectableType {
 
   private static final String TAG = RetrieveProfileJob.class.getSimpleName();
 

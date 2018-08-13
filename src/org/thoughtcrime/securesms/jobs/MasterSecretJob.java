@@ -3,10 +3,11 @@ package org.thoughtcrime.securesms.jobs;
 import android.content.Context;
 
 import org.thoughtcrime.securesms.crypto.MasterSecret;
+import org.thoughtcrime.securesms.jobmanager.Job;
 import org.thoughtcrime.securesms.jobmanager.JobParameters;
 import org.thoughtcrime.securesms.service.KeyCachingService;
 
-public abstract class MasterSecretJob extends ContextJob {
+public abstract class MasterSecretJob extends Job {
 
   public MasterSecretJob(Context context, JobParameters parameters) {
     super(context, parameters);

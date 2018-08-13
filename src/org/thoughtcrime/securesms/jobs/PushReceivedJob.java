@@ -4,17 +4,19 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 
 import org.thoughtcrime.securesms.ApplicationContext;
+import org.thoughtcrime.securesms.R;
 import org.thoughtcrime.securesms.database.Address;
 import org.thoughtcrime.securesms.database.DatabaseFactory;
 import org.thoughtcrime.securesms.database.MessagingDatabase.SyncMessageId;
 import org.thoughtcrime.securesms.database.RecipientDatabase;
+import org.thoughtcrime.securesms.jobmanager.Job;
 import org.thoughtcrime.securesms.jobmanager.JobManager;
 import org.thoughtcrime.securesms.jobmanager.JobParameters;
 import org.thoughtcrime.securesms.logging.Log;
 import org.thoughtcrime.securesms.recipients.Recipient;
 import org.whispersystems.signalservice.api.messages.SignalServiceEnvelope;
 
-public abstract class PushReceivedJob extends ContextJob {
+public abstract class PushReceivedJob extends Job {
 
   private static final String TAG = PushReceivedJob.class.getSimpleName();
 
@@ -38,6 +40,11 @@ public abstract class PushReceivedJob extends ContextJob {
     } else {
       Log.w(TAG, "Received envelope of unknown type: " + envelope.getType());
     }
+  }
+
+  @Override
+  protected String getDescription() {
+    return context.getString(R.string.JobDescription_receiving_message);
   }
 
   private void handleMessage(SignalServiceEnvelope envelope, Address source) {

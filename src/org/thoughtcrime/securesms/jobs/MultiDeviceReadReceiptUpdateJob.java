@@ -4,6 +4,7 @@ package org.thoughtcrime.securesms.jobs;
 import android.content.Context;
 
 import org.thoughtcrime.securesms.dependencies.InjectableType;
+import org.thoughtcrime.securesms.jobmanager.Job;
 import org.thoughtcrime.securesms.jobmanager.JobParameters;
 import org.thoughtcrime.securesms.jobmanager.requirements.NetworkRequirement;
 import org.thoughtcrime.securesms.logging.Log;
@@ -18,7 +19,7 @@ import java.io.IOException;
 
 import javax.inject.Inject;
 
-public class MultiDeviceReadReceiptUpdateJob extends ContextJob implements InjectableType {
+public class MultiDeviceReadReceiptUpdateJob extends Job implements InjectableType {
 
   private static final long serialVersionUID = 1L;
 

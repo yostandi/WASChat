@@ -5,6 +5,7 @@ import android.support.annotation.NonNull;
 
 import org.greenrobot.eventbus.EventBus;
 import org.thoughtcrime.securesms.ApplicationContext;
+import org.thoughtcrime.securesms.R;
 import org.thoughtcrime.securesms.TextSecureExpiredException;
 import org.thoughtcrime.securesms.attachments.Attachment;
 import org.thoughtcrime.securesms.contactshare.Contact;
@@ -84,6 +85,11 @@ public abstract class PushSendJob extends SendJob {
       Log.i(TAG, "Scheduling service outage detection job.");
       ApplicationContext.getInstance(context).getJobManager().add(new ServiceOutageDetectionJob(context));
     }
+  }
+
+  @Override
+  protected String getDescription() {
+    return context.getString(R.string.JobDescription_sending_message);
   }
 
   protected Optional<byte[]> getProfileKey(@NonNull Recipient recipient) {

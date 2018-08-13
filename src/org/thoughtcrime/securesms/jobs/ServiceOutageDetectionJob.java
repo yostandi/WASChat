@@ -5,6 +5,7 @@ import android.content.Context;
 import org.greenrobot.eventbus.EventBus;
 import org.thoughtcrime.securesms.BuildConfig;
 import org.thoughtcrime.securesms.events.ReminderUpdateEvent;
+import org.thoughtcrime.securesms.jobmanager.Job;
 import org.thoughtcrime.securesms.jobmanager.JobParameters;
 import org.thoughtcrime.securesms.jobmanager.requirements.NetworkRequirement;
 import org.thoughtcrime.securesms.logging.Log;
@@ -14,7 +15,7 @@ import org.thoughtcrime.securesms.util.TextSecurePreferences;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-public class ServiceOutageDetectionJob extends ContextJob {
+public class ServiceOutageDetectionJob extends Job {
 
   private static final String TAG = ServiceOutageDetectionJob.class.getSimpleName();
 

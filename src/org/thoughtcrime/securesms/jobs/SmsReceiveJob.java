@@ -4,6 +4,9 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.telephony.SmsMessage;
+
+import org.thoughtcrime.securesms.R;
+import org.thoughtcrime.securesms.jobmanager.Job;
 import org.thoughtcrime.securesms.logging.Log;
 
 import org.thoughtcrime.securesms.database.DatabaseFactory;
@@ -20,7 +23,7 @@ import org.whispersystems.libsignal.util.guava.Optional;
 import java.util.LinkedList;
 import java.util.List;
 
-public class SmsReceiveJob extends ContextJob {
+public class SmsReceiveJob extends Job {
 
   private static final long serialVersionUID = 1L;
 
@@ -70,6 +73,11 @@ public class SmsReceiveJob extends ContextJob {
   @Override
   public boolean onShouldRetry(Exception exception) {
     return exception instanceof MigrationPendingException;
+  }
+
+  @Override
+  protected String getDescription() {
+    return context.getString(R.string.JobDescription_receiving_message);
   }
 
   private boolean isBlocked(IncomingTextMessage message) {

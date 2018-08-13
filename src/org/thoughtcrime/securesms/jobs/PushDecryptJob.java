@@ -7,7 +7,11 @@ import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
+
+import org.thoughtcrime.securesms.jobmanager.Job;
 import org.thoughtcrime.securesms.logging.Log;
+
+import android.support.v4.content.ContextCompat;
 import android.util.Pair;
 
 import org.thoughtcrime.securesms.ApplicationContext;
@@ -100,7 +104,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class PushDecryptJob extends ContextJob {
+public class PushDecryptJob extends Job {
 
   private static final long serialVersionUID = 2L;
 
@@ -164,6 +168,11 @@ public class PushDecryptJob extends ContextJob {
   @Override
   public void onCanceled() {
 
+  }
+
+  @Override
+  protected String getDescription() {
+    return context.getString(R.string.JobDescription_receiving_message);
   }
 
   private void handleMessage(SignalServiceEnvelope envelope, Optional<Long> smsMessageId) {
@@ -259,8 +268,7 @@ public class PushDecryptJob extends ContextJob {
       intent.putExtra(WebRtcCallService.EXTRA_REMOTE_DESCRIPTION, message.getDescription());
       intent.putExtra(WebRtcCallService.EXTRA_TIMESTAMP, envelope.getTimestamp());
 
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) context.startForegroundService(intent);
-      else                                                context.startService(intent);
+      ContextCompat.startForegroundService(context, intent);
     }
   }
 

@@ -10,6 +10,8 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.Nullable;
+
+import org.thoughtcrime.securesms.jobmanager.Job;
 import org.thoughtcrime.securesms.logging.Log;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -32,7 +34,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
-public class UpdateApkJob extends ContextJob {
+public class UpdateApkJob extends Job {
 
   private static final String TAG = UpdateApkJob.class.getSimpleName();
 

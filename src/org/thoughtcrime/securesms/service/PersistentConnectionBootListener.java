@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
+import android.support.v4.content.ContextCompat;
 
 import org.thoughtcrime.securesms.util.TextSecurePreferences;
 
@@ -16,8 +17,7 @@ public class PersistentConnectionBootListener extends BroadcastReceiver {
         Intent serviceIntent = new Intent(context, MessageRetrievalService.class);
         serviceIntent.setAction(MessageRetrievalService.ACTION_INITIALIZE);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) context.startForegroundService(serviceIntent);
-        else                                                context.startService(serviceIntent);
+        ContextCompat.startForegroundService(context, serviceIntent);
       }
     }
   }

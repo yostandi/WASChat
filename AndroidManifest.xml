@@ -462,7 +462,7 @@
         </intent-filter>
     </service>
 
-    <service android:name=".service.GenericForegroundService"/>
+    <service android:name=".service.ForegroundTaskManager$ForegroundTask"/>
 
     <receiver android:name=".gcm.GcmBroadcastReceiver" android:permission="com.google.android.c2dm.permission.SEND" >
         <intent-filter>

@@ -364,6 +364,11 @@
     <string name="InviteActivity_no_app_to_share_to">It looks like you don\'t have any apps to share to.</string>
     <string name="InviteActivity_friends_dont_let_friends_text_unencrypted">Friends don\'t let friends chat unencrypted.</string>
 
+    <!-- Job Descriptions -->
+    <string name="JobDescription_generic">Finishing some work</string>
+    <string name="JobDescription_receiving_message">Downloading a message</string>
+    <string name="JobDescription_sending_message">Sending a message</string>
+
     <!-- MessageDetailsRecipient -->
     <string name="MessageDetailsRecipient_failed_to_send">Failed to send</string>
     <string name="MessageDetailsRecipient_new_safety_number">New safety number</string>

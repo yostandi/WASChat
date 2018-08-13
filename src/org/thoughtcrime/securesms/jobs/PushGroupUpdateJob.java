@@ -2,6 +2,8 @@ package org.thoughtcrime.securesms.jobs;
 
 
 import android.content.Context;
+
+import org.thoughtcrime.securesms.jobmanager.Job;
 import org.thoughtcrime.securesms.logging.Log;
 
 import org.thoughtcrime.securesms.database.Address;
@@ -31,7 +33,7 @@ import java.util.List;
 
 import javax.inject.Inject;
 
-public class PushGroupUpdateJob extends ContextJob implements InjectableType {
+public class PushGroupUpdateJob extends Job implements InjectableType {
 
   private static final String TAG = PushGroupUpdateJob.class.getSimpleName();
 

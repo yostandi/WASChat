@@ -1,6 +1,8 @@
 package org.thoughtcrime.securesms.jobs;
 
 import android.content.Context;
+
+import org.thoughtcrime.securesms.jobmanager.Job;
 import org.thoughtcrime.securesms.logging.Log;
 
 import org.thoughtcrime.securesms.dependencies.InjectableType;
@@ -15,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
-public class RefreshAttributesJob extends ContextJob implements InjectableType {
+public class RefreshAttributesJob extends Job implements InjectableType {
 
   public static final long serialVersionUID = 1L;
 

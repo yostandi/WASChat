@@ -22,6 +22,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.support.v4.app.NotificationCompat;
+
+import org.thoughtcrime.securesms.jobmanager.Job;
 import org.thoughtcrime.securesms.logging.Log;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -41,7 +43,7 @@ import org.whispersystems.signalservice.api.push.exceptions.NonSuccessfulRespons
 
 import javax.inject.Inject;
 
-public class GcmRefreshJob extends ContextJob implements InjectableType {
+public class GcmRefreshJob extends Job implements InjectableType {
 
   private static final String TAG = GcmRefreshJob.class.getSimpleName();
 

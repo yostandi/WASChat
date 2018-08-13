@@ -4,6 +4,7 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 
 import org.thoughtcrime.securesms.dependencies.InjectableType;
+import org.thoughtcrime.securesms.jobmanager.Job;
 import org.thoughtcrime.securesms.jobmanager.JobParameters;
 import org.thoughtcrime.securesms.jobmanager.requirements.NetworkRequirement;
 import org.whispersystems.signalservice.api.SignalServiceMessageSender;
@@ -18,7 +19,7 @@ import java.io.IOException;
 
 import javax.inject.Inject;
 
-public class RequestGroupInfoJob extends ContextJob implements InjectableType {
+public class RequestGroupInfoJob extends Job implements InjectableType {
 
   private static final String TAG = RequestGroupInfoJob.class.getSimpleName();
 

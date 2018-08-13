@@ -5,6 +5,7 @@ import android.content.Context;
 
 import org.thoughtcrime.securesms.database.Address;
 import org.thoughtcrime.securesms.dependencies.InjectableType;
+import org.thoughtcrime.securesms.jobmanager.Job;
 import org.thoughtcrime.securesms.jobmanager.JobParameters;
 import org.thoughtcrime.securesms.jobmanager.requirements.NetworkRequirement;
 import org.thoughtcrime.securesms.logging.Log;
@@ -20,7 +21,7 @@ import java.util.List;
 
 import javax.inject.Inject;
 
-public class SendReadReceiptJob extends ContextJob implements InjectableType {
+public class SendReadReceiptJob extends Job implements InjectableType {
 
   private static final long serialVersionUID = 1L;
 

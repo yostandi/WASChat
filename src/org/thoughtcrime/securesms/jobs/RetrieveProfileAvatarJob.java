@@ -3,6 +3,8 @@ package org.thoughtcrime.securesms.jobs;
 
 import android.content.Context;
 import android.text.TextUtils;
+
+import org.thoughtcrime.securesms.jobmanager.Job;
 import org.thoughtcrime.securesms.logging.Log;
 
 import org.thoughtcrime.securesms.database.DatabaseFactory;
@@ -23,7 +25,7 @@ import java.io.InputStream;
 
 import javax.inject.Inject;
 
-public class RetrieveProfileAvatarJob extends ContextJob implements InjectableType {
+public class RetrieveProfileAvatarJob extends Job implements InjectableType {
 
   private static final String TAG = RetrieveProfileAvatarJob.class.getSimpleName();
 

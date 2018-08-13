@@ -2,6 +2,8 @@ package org.thoughtcrime.securesms.jobs;
 
 
 import android.content.Context;
+
+import org.thoughtcrime.securesms.jobmanager.Job;
 import org.thoughtcrime.securesms.logging.Log;
 
 import org.thoughtcrime.securesms.database.Address;
@@ -22,7 +24,7 @@ import java.io.IOException;
 
 import javax.inject.Inject;
 
-public class MultiDeviceVerifiedUpdateJob extends ContextJob implements InjectableType {
+public class MultiDeviceVerifiedUpdateJob extends Job implements InjectableType {
 
   private static final long serialVersionUID = 1L;
 

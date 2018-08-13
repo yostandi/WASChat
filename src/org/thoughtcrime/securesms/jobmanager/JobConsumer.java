@@ -71,7 +71,7 @@ class JobConsumer extends Thread {
   private JobResult runJob(Job job) {
     while (canRetry(job)) {
       try {
-        job.onRun();
+        job.run();
         return JobResult.SUCCESS;
       } catch (Exception exception) {
         Log.w(TAG, exception);
