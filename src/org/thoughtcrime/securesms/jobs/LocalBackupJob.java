@@ -50,8 +50,9 @@ public class LocalBackupJob extends Job {
       throw new IOException("No external storage permission!");
     }
 
-    ForegroundTaskManager.getInstance(context).startTask(context.getString(R.string.LocalBackupJob_creating_backup),
-                                                         NotificationChannels.BACKUPS);
+    ForegroundTaskManager.getInstance().startTask(context,
+                                                  context.getString(R.string.LocalBackupJob_creating_backup),
+                                                  NotificationChannels.BACKUPS);
 
     try {
       String backupPassword  = TextSecurePreferences.getBackupPassphrase(context);
@@ -83,7 +84,7 @@ public class LocalBackupJob extends Job {
 
       BackupUtil.deleteOldBackups();
     } finally {
-      ForegroundTaskManager.getInstance(context).stopTask();
+      ForegroundTaskManager.getInstance().stopTask(context);
     }
   }
 

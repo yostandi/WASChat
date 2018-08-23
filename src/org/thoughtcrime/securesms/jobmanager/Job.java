@@ -19,11 +19,9 @@ package org.thoughtcrime.securesms.jobmanager;
 import android.content.Context;
 import android.os.PowerManager;
 
-import org.thoughtcrime.securesms.ApplicationContext;
 import org.thoughtcrime.securesms.R;
 import org.thoughtcrime.securesms.jobmanager.dependencies.ContextDependent;
 import org.thoughtcrime.securesms.jobmanager.requirements.Requirement;
-import org.thoughtcrime.securesms.service.ForegroundTaskManager;
 
 import java.io.Serializable;
 import java.util.List;
@@ -146,12 +144,7 @@ public abstract class Job implements Serializable, ContextDependent {
   public abstract void onAdded();
 
   public void run() throws Exception {
-    ForegroundTaskManager.getInstance(context).startTask(getDescription());
-    try {
-      onRun();
-    } finally {
-      ForegroundTaskManager.getInstance(context).stopTask();
-    }
+    onRun();
   }
 
   /**

@@ -41,7 +41,7 @@ public class SQLCipherMigrationHelper {
   {
     modernDb.beginTransaction();
     try {
-      ForegroundTaskManager.getInstance(context).startTask(context.getString(R.string.SQLCipherMigrationHelper_migrating_signal_database));
+      ForegroundTaskManager.getInstance().startTask(context, context.getString(R.string.SQLCipherMigrationHelper_migrating_signal_database));
       copyTable("identities", legacyDb, modernDb, null);
       copyTable("push", legacyDb, modernDb, null);
       copyTable("groups", legacyDb, modernDb, null);
@@ -50,7 +50,7 @@ public class SQLCipherMigrationHelper {
       modernDb.setTransactionSuccessful();
     } finally {
       modernDb.endTransaction();
-      ForegroundTaskManager.getInstance(context).stopTask();
+      ForegroundTaskManager.getInstance().stopTask(context);
     }
   }
 
@@ -66,7 +66,7 @@ public class SQLCipherMigrationHelper {
     modernDb.beginTransaction();
 
     try {
-      ForegroundTaskManager.getInstance(context).startTask(context.getString(R.string.SQLCipherMigrationHelper_migrating_signal_database));
+      ForegroundTaskManager.getInstance().startTask(context, context.getString(R.string.SQLCipherMigrationHelper_migrating_signal_database));
       int total = 5000;
 
       copyTable("sms", legacyDb, modernDb, (row, progress) -> {
@@ -175,7 +175,7 @@ public class SQLCipherMigrationHelper {
       modernDb.setTransactionSuccessful();
     } finally {
       modernDb.endTransaction();
-      ForegroundTaskManager.getInstance(context).stopTask();
+      ForegroundTaskManager.getInstance().stopTask(context);
     }
   }
 
