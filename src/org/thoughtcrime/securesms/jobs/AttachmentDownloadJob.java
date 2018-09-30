@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.jobs;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
+import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
 
 import org.thoughtcrime.securesms.jobmanager.SafeData;
@@ -57,20 +58,25 @@ public class AttachmentDownloadJob extends MasterSecretJob implements Injectable
   private boolean manual;
 
   public AttachmentDownloadJob() {
-    super(null, null);
+    super(null);
   }
 
   public AttachmentDownloadJob(Context context, long messageId, AttachmentId attachmentId, boolean manual) {
-    super(context, JobParameters.newBuilder()
-                                .withGroupId(AttachmentDownloadJob.class.getCanonicalName())
-                                .withMasterSecretRequirement()
-                                .withNetworkRequirement()
-                                .create());
-
+    super(context);
     this.messageId    = messageId;
     this.partRowId    = attachmentId.getRowId();
     this.partUniqueId = attachmentId.getUniqueId();
     this.manual       = manual;
+  }
+
+  @WorkerThread
+  @Override
+  protected @NonNull JobParameters getJobParameters() {
+    return JobParameters.newBuilder()
+                        .withGroupId(AttachmentDownloadJob.class.getCanonicalName())
+                        .withMasterSecretRequirement()
+                        .withNetworkRequirement()
+                        .create();
   }
 
   @Override

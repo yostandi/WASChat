@@ -8,8 +8,10 @@ import org.thoughtcrime.securesms.service.KeyCachingService;
 
 public abstract class MasterSecretJob extends ContextJob {
 
-  public MasterSecretJob(Context context, JobParameters parameters) {
-    super(context, parameters);
+  private static final long serialVersionUID = -5049294656486448137L;
+
+  public MasterSecretJob(Context context) {
+    super(context);
   }
 
   @Override

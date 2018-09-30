@@ -24,11 +24,13 @@ import java.util.List;
 
 public abstract class SendJob extends MasterSecretJob {
 
+  private static final long serialVersionUID = -5895732972755514388L;
+
   @SuppressWarnings("unused")
   private final static String TAG = SendJob.class.getSimpleName();
 
-  public SendJob(Context context, JobParameters parameters) {
-    super(context, parameters);
+  public SendJob(Context context) {
+    super(context);
   }
 
   @Override

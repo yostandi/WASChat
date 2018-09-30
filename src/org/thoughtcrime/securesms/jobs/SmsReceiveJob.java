@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.jobs;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.WorkerThread;
 import android.telephony.SmsMessage;
 
 import org.thoughtcrime.securesms.jobmanager.SafeData;
@@ -39,16 +40,22 @@ public class SmsReceiveJob extends ContextJob {
   private int subscriptionId;
 
   public SmsReceiveJob() {
-    super(null, null);
+    super(null);
   }
 
   public SmsReceiveJob(@NonNull Context context, @Nullable Object[] pdus, int subscriptionId) {
-    super(context, JobParameters.newBuilder()
-                                .withSqlCipherRequirement()
-                                .create());
+    super(context);
 
     this.pdus           = pdus;
     this.subscriptionId = subscriptionId;
+  }
+
+  @WorkerThread
+  @Override
+  protected @NonNull JobParameters getJobParameters() {
+    return JobParameters.newBuilder()
+                        .withSqlCipherRequirement()
+                        .create();
   }
 
   @Override

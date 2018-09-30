@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.jobs;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.support.annotation.WorkerThread;
 
 import org.thoughtcrime.securesms.jobmanager.SafeData;
 import org.thoughtcrime.securesms.logging.Log;
@@ -39,14 +40,20 @@ public class MultiDeviceProfileKeyUpdateJob extends MasterSecretJob implements I
   @Inject transient SignalServiceMessageSender messageSender;
 
   public MultiDeviceProfileKeyUpdateJob() {
-    super(null, null);
+    super(null);
   }
 
   public MultiDeviceProfileKeyUpdateJob(Context context) {
-    super(context, JobParameters.newBuilder()
-                                .withNetworkRequirement()
-                                .withGroupId(MultiDeviceProfileKeyUpdateJob.class.getSimpleName())
-                                .create());
+    super(context);
+  }
+
+  @WorkerThread
+  @Override
+  protected @NonNull JobParameters getJobParameters() {
+    return JobParameters.newBuilder()
+                        .withNetworkRequirement()
+                        .withGroupId(MultiDeviceProfileKeyUpdateJob.class.getSimpleName())
+                        .create();
   }
 
   @Override

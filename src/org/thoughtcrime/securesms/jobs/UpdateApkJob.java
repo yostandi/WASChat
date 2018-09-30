@@ -11,6 +11,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.WorkerThread;
 
 import org.thoughtcrime.securesms.jobmanager.SafeData;
 import org.thoughtcrime.securesms.logging.Log;
@@ -39,15 +40,21 @@ public class UpdateApkJob extends ContextJob {
   private static final String TAG = UpdateApkJob.class.getSimpleName();
 
   public UpdateApkJob() {
-    super(null, null);
+    super(null);
   }
 
   public UpdateApkJob(Context context) {
-    super(context, JobParameters.newBuilder()
-                                .withGroupId(UpdateApkJob.class.getSimpleName())
-                                .withNetworkRequirement()
-                                .withRetryCount(2)
-                                .create());
+    super(context);
+  }
+
+  @WorkerThread
+  @Override
+  protected @NonNull JobParameters getJobParameters() {
+    return JobParameters.newBuilder()
+                        .withGroupId(UpdateApkJob.class.getSimpleName())
+                        .withNetworkRequirement()
+                        .withRetryCount(2)
+                        .create();
   }
 
   @Override

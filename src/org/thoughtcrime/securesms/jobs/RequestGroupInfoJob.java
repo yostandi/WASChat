@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.jobs;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.support.annotation.WorkerThread;
 
 import org.thoughtcrime.securesms.dependencies.InjectableType;
 import org.thoughtcrime.securesms.jobmanager.JobParameters;
@@ -36,17 +37,23 @@ public class RequestGroupInfoJob extends ContextJob implements InjectableType {
   private byte[] groupId;
 
   public RequestGroupInfoJob() {
-    super(null, null);
+    super(null);
   }
 
   public RequestGroupInfoJob(@NonNull Context context, @NonNull String source, @NonNull byte[] groupId) {
-    super(context, JobParameters.newBuilder()
-                                .withNetworkRequirement()
-                                .withRetryCount(50)
-                                .create());
+    super(context);
 
     this.source  = source;
     this.groupId = groupId;
+  }
+
+  @WorkerThread
+  @Override
+  protected @NonNull JobParameters getJobParameters() {
+    return JobParameters.newBuilder()
+                        .withNetworkRequirement()
+                        .withRetryCount(50)
+                        .create();
   }
 
   @Override

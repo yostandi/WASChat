@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.jobs;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
 
 import org.thoughtcrime.securesms.jobmanager.SafeData;
@@ -63,18 +64,24 @@ public class MmsSendJob extends SendJob {
   private long messageId;
 
   public MmsSendJob() {
-    super(null, null);
+    super(null);
   }
 
   public MmsSendJob(Context context, long messageId) {
-    super(context, JobParameters.newBuilder()
-                                .withGroupId("mms-operation")
-                                .withNetworkRequirement()
-                                .withMasterSecretRequirement()
-                                .withRetryCount(15)
-                                .create());
+    super(context);
 
     this.messageId = messageId;
+  }
+
+  @WorkerThread
+  @Override
+  protected @NonNull JobParameters getJobParameters() {
+    return JobParameters.newBuilder()
+                        .withGroupId("mms-operation")
+                        .withNetworkRequirement()
+                        .withMasterSecretRequirement()
+                        .withRetryCount(15)
+                        .create();
   }
 
   @Override

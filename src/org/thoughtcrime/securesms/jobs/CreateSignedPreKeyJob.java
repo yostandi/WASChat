@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.jobs;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.support.annotation.WorkerThread;
 
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil;
 import org.thoughtcrime.securesms.crypto.MasterSecret;
@@ -31,15 +32,21 @@ public class CreateSignedPreKeyJob extends MasterSecretJob implements Injectable
   @Inject transient SignalServiceAccountManager accountManager;
 
   public CreateSignedPreKeyJob() {
-    super(null, null);
+    super(null);
   }
 
   public CreateSignedPreKeyJob(Context context) {
-    super(context, JobParameters.newBuilder()
-                                .withNetworkRequirement()
-                                .withMasterSecretRequirement()
-                                .withGroupId(CreateSignedPreKeyJob.class.getSimpleName())
-                                .create());
+    super(context);
+  }
+
+  @WorkerThread
+  @Override
+  protected @NonNull JobParameters getJobParameters() {
+    return JobParameters.newBuilder()
+                        .withNetworkRequirement()
+                        .withMasterSecretRequirement()
+                        .withGroupId(CreateSignedPreKeyJob.class.getSimpleName())
+                        .create();
   }
 
   @Override

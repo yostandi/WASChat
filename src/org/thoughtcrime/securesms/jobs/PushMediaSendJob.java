@@ -2,7 +2,9 @@ package org.thoughtcrime.securesms.jobs;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.support.annotation.WorkerThread;
 
+import org.thoughtcrime.securesms.jobmanager.JobParameters;
 import org.thoughtcrime.securesms.jobmanager.SafeData;
 import org.thoughtcrime.securesms.logging.Log;
 
@@ -50,12 +52,19 @@ public class PushMediaSendJob extends PushSendJob implements InjectableType {
   private long messageId;
 
   public PushMediaSendJob() {
-    super(null, null);
+    super(null);
   }
 
   public PushMediaSendJob(Context context, long messageId, Address destination) {
-    super(context, constructParameters(destination));
+    super(context);
     this.messageId = messageId;
+  }
+
+  @WorkerThread
+  @Override
+  protected @NonNull JobParameters getJobParameters() throws NoSuchMessageException, MmsException {
+    OutgoingMediaMessage message = DatabaseFactory.getMmsDatabase(context).getOutgoingMessage(messageId);
+    return constructParameters(message.getRecipient().getAddress());
   }
 
   @Override

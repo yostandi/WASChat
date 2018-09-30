@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.jobs;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.support.annotation.WorkerThread;
 
 import org.thoughtcrime.securesms.database.Address;
 import org.thoughtcrime.securesms.dependencies.InjectableType;
@@ -41,17 +42,23 @@ public class SendReadReceiptJob extends ContextJob implements InjectableType {
   private long       timestamp;
 
   public SendReadReceiptJob() {
-    super(null, null);
+    super(null);
   }
 
   public SendReadReceiptJob(Context context, Address address, List<Long> messageIds) {
-    super(context, JobParameters.newBuilder()
-                                .withNetworkRequirement()
-                                .create());
+    super(context);
 
     this.address    = address.serialize();
     this.messageIds = messageIds;
     this.timestamp  = System.currentTimeMillis();
+  }
+
+  @WorkerThread
+  @Override
+  protected @NonNull JobParameters getJobParameters() {
+    return JobParameters.newBuilder()
+                        .withNetworkRequirement()
+                        .create();
   }
 
   @Override

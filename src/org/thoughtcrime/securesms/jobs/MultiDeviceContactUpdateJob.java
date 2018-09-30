@@ -9,6 +9,7 @@ import android.os.Build;
 import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.WorkerThread;
 
 import org.thoughtcrime.securesms.ApplicationContext;
 import org.thoughtcrime.securesms.contacts.ContactAccessor;
@@ -69,7 +70,7 @@ public class MultiDeviceContactUpdateJob extends MasterSecretJob implements Inje
   private boolean forceSync;
 
   public MultiDeviceContactUpdateJob() {
-    super(null, null);
+    super(null);
   }
 
   public MultiDeviceContactUpdateJob(@NonNull Context context) {
@@ -85,16 +86,22 @@ public class MultiDeviceContactUpdateJob extends MasterSecretJob implements Inje
   }
 
   public MultiDeviceContactUpdateJob(@NonNull Context context, @Nullable Address address, boolean forceSync) {
-    super(context, JobParameters.newBuilder()
-                                .withNetworkRequirement()
-                                .withMasterSecretRequirement()
-                                .withGroupId(MultiDeviceContactUpdateJob.class.getSimpleName())
-                                .create());
+    super(context);
 
     this.forceSync = forceSync;
 
     if (address != null) this.address = address.serialize();
     else                 this.address = null;
+  }
+
+  @WorkerThread
+  @Override
+  protected @NonNull JobParameters getJobParameters() {
+    return JobParameters.newBuilder()
+                        .withNetworkRequirement()
+                        .withMasterSecretRequirement()
+                        .withGroupId(MultiDeviceContactUpdateJob.class.getSimpleName())
+                        .create();
   }
 
   @Override

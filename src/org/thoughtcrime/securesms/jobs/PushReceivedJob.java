@@ -16,10 +16,12 @@ import org.whispersystems.signalservice.api.messages.SignalServiceEnvelope;
 
 public abstract class PushReceivedJob extends ContextJob {
 
+  private static final long serialVersionUID = 5164571729177075796L;
+
   private static final String TAG = PushReceivedJob.class.getSimpleName();
 
-  protected PushReceivedJob(Context context, JobParameters parameters) {
-    super(context, parameters);
+  protected PushReceivedJob(Context context) {
+    super(context);
   }
 
   public void handle(SignalServiceEnvelope envelope) {

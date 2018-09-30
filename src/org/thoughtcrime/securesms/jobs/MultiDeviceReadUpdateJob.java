@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.jobs;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.support.annotation.WorkerThread;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -42,20 +43,26 @@ public class MultiDeviceReadUpdateJob extends MasterSecretJob implements Injecta
   @Inject transient SignalServiceMessageSender messageSender;
 
   public MultiDeviceReadUpdateJob() {
-    super(null, null);
+    super(null);
   }
 
   public MultiDeviceReadUpdateJob(Context context, List<SyncMessageId> messageIds) {
-    super(context, JobParameters.newBuilder()
-                                .withNetworkRequirement()
-                                .withMasterSecretRequirement()
-                                .create());
+    super(context);
 
     this.messageIds = new LinkedList<>();
 
     for (SyncMessageId messageId : messageIds) {
       this.messageIds.add(new SerializableSyncMessageId(messageId.getAddress().toPhoneString(), messageId.getTimetamp()));
     }
+  }
+
+  @WorkerThread
+  @Override
+  protected @NonNull JobParameters getJobParameters() {
+    return JobParameters.newBuilder()
+                        .withNetworkRequirement()
+                        .withMasterSecretRequirement()
+                        .create();
   }
 
   @Override

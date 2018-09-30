@@ -4,6 +4,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.WorkerThread;
 
 import org.thoughtcrime.securesms.jobmanager.SafeData;
 import org.thoughtcrime.securesms.logging.Log;
@@ -64,19 +65,25 @@ public class MmsDownloadJob extends MasterSecretJob {
   private boolean automatic;
 
   public MmsDownloadJob() {
-    super(null, null);
+    super(null);
   }
 
   public MmsDownloadJob(Context context, long messageId, long threadId, boolean automatic) {
-    super(context, JobParameters.newBuilder()
-                                .withMasterSecretRequirement()
-                                .withMasterSecretRequirement()
-                                .withGroupId("mms-operation")
-                                .create());
+    super(context);
 
     this.messageId = messageId;
     this.threadId  = threadId;
     this.automatic = automatic;
+  }
+
+  @WorkerThread
+  @Override
+  protected @NonNull JobParameters getJobParameters() {
+    return JobParameters.newBuilder()
+                        .withMasterSecretRequirement()
+                        .withMasterSecretRequirement()
+                        .withGroupId("mms-operation")
+                        .create();
   }
 
   @Override

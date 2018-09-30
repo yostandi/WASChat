@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.support.annotation.NonNull;
+import android.support.annotation.WorkerThread;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
 
@@ -116,7 +117,7 @@ public class PushDecryptJob extends ContextJob {
   private long smsMessageId;
 
   public PushDecryptJob() {
-    super(null, null);
+    super(null);
   }
 
   public PushDecryptJob(Context context, long pushMessageId) {
@@ -124,11 +125,17 @@ public class PushDecryptJob extends ContextJob {
   }
 
   public PushDecryptJob(Context context, long pushMessageId, long smsMessageId) {
-    super(context, JobParameters.newBuilder()
-                                .withGroupId("__PUSH_DECRYPT_JOB__")
-                                .create());
+    super(context);
     this.messageId    = pushMessageId;
     this.smsMessageId = smsMessageId;
+  }
+
+  @WorkerThread
+  @Override
+  protected @NonNull JobParameters getJobParameters() {
+    return JobParameters.newBuilder()
+                        .withGroupId("__PUSH_DECRYPT_JOB__")
+                        .create();
   }
 
   @Override

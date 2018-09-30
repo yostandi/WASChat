@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.jobs;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.support.annotation.NonNull;
+import android.support.annotation.WorkerThread;
 
 import org.thoughtcrime.securesms.crypto.MasterSecret;
 import org.thoughtcrime.securesms.database.DatabaseFactory;
@@ -45,16 +46,22 @@ public class AvatarDownloadJob extends MasterSecretJob implements InjectableType
   private byte[] groupId;
 
   public AvatarDownloadJob() {
-    super(null, null);
+    super(null);
   }
 
   public AvatarDownloadJob(Context context, @NonNull byte[] groupId) {
-    super(context, JobParameters.newBuilder()
-                                .withMasterSecretRequirement()
-                                .withNetworkRequirement()
-                                .create());
+    super(context);
 
     this.groupId = groupId;
+  }
+
+  @WorkerThread
+  @Override
+  protected @NonNull JobParameters getJobParameters() {
+    return JobParameters.newBuilder()
+                        .withMasterSecretRequirement()
+                        .withNetworkRequirement()
+                        .create();
   }
 
   @Override

@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.jobs;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.support.annotation.WorkerThread;
 
 import org.greenrobot.eventbus.EventBus;
 import org.thoughtcrime.securesms.BuildConfig;
@@ -26,16 +27,22 @@ public class ServiceOutageDetectionJob extends ContextJob {
   private static final long   CHECK_TIME = 1000 * 60;
 
   public ServiceOutageDetectionJob() {
-    super(null, null);
+    super(null);
   }
 
   public ServiceOutageDetectionJob(Context context) {
-    super(context, new JobParameters.Builder()
-                                    .withGroupId(ServiceOutageDetectionJob.class.getSimpleName())
-                                    .withDuplicatesIgnored(true)
-                                    .withNetworkRequirement()
-                                    .withRetryCount(5)
-                                    .create());
+    super(context);
+  }
+
+  @WorkerThread
+  @Override
+  protected @NonNull JobParameters getJobParameters() {
+    return new JobParameters.Builder()
+                            .withGroupId(ServiceOutageDetectionJob.class.getSimpleName())
+                            .withDuplicatesIgnored(true)
+                            .withNetworkRequirement()
+                            .withRetryCount(5)
+                            .create();
   }
 
   @Override

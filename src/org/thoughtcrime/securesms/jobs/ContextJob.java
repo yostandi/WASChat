@@ -8,10 +8,11 @@ import org.thoughtcrime.securesms.jobmanager.dependencies.ContextDependent;
 
 public abstract class ContextJob extends Job implements ContextDependent {
 
+  private static final long serialVersionUID = 504820803255161092L;
+
   protected transient Context context;
 
-  protected ContextJob(Context context, JobParameters parameters) {
-    super(parameters);
+  protected ContextJob(Context context) {
     this.context = context;
   }
 

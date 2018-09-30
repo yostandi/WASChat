@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.NonNull;
+import android.support.annotation.WorkerThread;
 import android.telephony.PhoneNumberUtils;
 import android.telephony.SmsManager;
 
@@ -38,12 +39,19 @@ public class SmsSendJob extends SendJob {
   private long messageId;
 
   public SmsSendJob() {
-    super(null, null);
+    super(null);
   }
 
   public SmsSendJob(Context context, long messageId, String name) {
-    super(context, constructParameters(name));
+    super(context);
     this.messageId = messageId;
+  }
+
+  @WorkerThread
+  @Override
+  protected @NonNull JobParameters getJobParameters() throws NoSuchMessageException {
+    SmsMessageRecord message = DatabaseFactory.getSmsDatabase(context).getMessage(messageId);
+    return constructParameters(message.getRecipient().getName());
   }
 
   @Override

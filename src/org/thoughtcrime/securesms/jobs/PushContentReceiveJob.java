@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.jobs;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.support.annotation.WorkerThread;
 
 import org.thoughtcrime.securesms.jobmanager.SafeData;
 import org.thoughtcrime.securesms.logging.Log;
@@ -25,17 +26,25 @@ public class PushContentReceiveJob extends PushReceivedJob {
   private String data;
 
   public PushContentReceiveJob() {
-    super(null, null);
+    super(null);
   }
 
   public PushContentReceiveJob(Context context) {
-    super(context, JobParameters.newBuilder().create());
+    super(context);
     this.data = null;
   }
 
   public PushContentReceiveJob(Context context, String data) {
-    super(context, JobParameters.newBuilder().create());
+    super(context);
     this.data = data;
+  }
+
+  @WorkerThread
+  @Override
+  protected @NonNull JobParameters getJobParameters() {
+    return JobParameters.newBuilder()
+                        .withGroupId(PushContentReceiveJob.class.getSimpleName())
+                        .create();
   }
 
   @Override

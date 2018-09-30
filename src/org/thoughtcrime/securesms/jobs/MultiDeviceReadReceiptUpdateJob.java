@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.jobs;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.support.annotation.WorkerThread;
 
 import org.thoughtcrime.securesms.dependencies.InjectableType;
 import org.thoughtcrime.securesms.jobmanager.JobParameters;
@@ -34,16 +35,22 @@ public class MultiDeviceReadReceiptUpdateJob extends ContextJob implements Injec
   private boolean enabled;
 
   public MultiDeviceReadReceiptUpdateJob() {
-    super(null, null);
+    super(null);
   }
 
   public MultiDeviceReadReceiptUpdateJob(Context context, boolean enabled) {
-    super(context, JobParameters.newBuilder()
-                                .withGroupId("__MULTI_DEVICE_READ_RECEIPT_UPDATE_JOB__")
-                                .withNetworkRequirement()
-                                .create());
+    super(context);
 
     this.enabled = enabled;
+  }
+
+  @WorkerThread
+  @Override
+  protected @NonNull JobParameters getJobParameters() {
+    return JobParameters.newBuilder()
+                        .withGroupId("__MULTI_DEVICE_READ_RECEIPT_UPDATE_JOB__")
+                        .withNetworkRequirement()
+                        .create();
   }
 
   @Override

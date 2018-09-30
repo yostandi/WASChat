@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.jobs;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.support.annotation.WorkerThread;
 
 import org.thoughtcrime.securesms.crypto.MasterSecret;
 import org.thoughtcrime.securesms.database.DatabaseFactory;
@@ -35,15 +36,21 @@ public class MultiDeviceBlockedUpdateJob extends MasterSecretJob implements Inje
   @Inject transient SignalServiceMessageSender messageSender;
 
   public MultiDeviceBlockedUpdateJob() {
-    super(null, null);
+    super(null);
   }
 
   public MultiDeviceBlockedUpdateJob(Context context) {
-    super(context, JobParameters.newBuilder()
-                                .withNetworkRequirement()
-                                .withMasterSecretRequirement()
-                                .withGroupId(MultiDeviceBlockedUpdateJob.class.getSimpleName())
-                                .create());
+    super(context);
+  }
+
+  @WorkerThread
+  @Override
+  protected @NonNull JobParameters getJobParameters() {
+    return JobParameters.newBuilder()
+                        .withNetworkRequirement()
+                        .withMasterSecretRequirement()
+                        .withGroupId(MultiDeviceBlockedUpdateJob.class.getSimpleName())
+                        .create();
   }
 
   @Override

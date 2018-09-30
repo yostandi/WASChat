@@ -18,6 +18,7 @@ package org.thoughtcrime.securesms.jobs;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.support.annotation.WorkerThread;
 
 import org.thoughtcrime.securesms.database.DatabaseFactory;
 import org.thoughtcrime.securesms.jobmanager.JobParameters;
@@ -36,13 +37,21 @@ public class TrimThreadJob extends ContextJob {
   private long threadId;
 
   public TrimThreadJob() {
-    super(null, null);
+    super(null);
   }
 
   public TrimThreadJob(Context context, long threadId) {
-    super(context, JobParameters.newBuilder().withGroupId(TrimThreadJob.class.getSimpleName()).create());
+    super(context);
     this.context  = context;
     this.threadId = threadId;
+  }
+
+  @WorkerThread
+  @Override
+  protected @NonNull JobParameters getJobParameters() {
+    return JobParameters.newBuilder()
+                        .withGroupId(TrimThreadJob.class.getSimpleName())
+                        .create();
   }
 
   @Override

@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.jobs;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.WorkerThread;
 
 import org.thoughtcrime.securesms.database.Address;
 import org.thoughtcrime.securesms.jobmanager.SafeData;
@@ -28,7 +29,7 @@ public class DirectoryRefreshJob extends ContextJob {
             private transient boolean      notifyOfNewUsers;
 
   public DirectoryRefreshJob() {
-    super(null, null);
+    super(null);
   }
 
   public DirectoryRefreshJob(@NonNull Context context, boolean notifyOfNewUsers) {
@@ -39,13 +40,19 @@ public class DirectoryRefreshJob extends ContextJob {
                              @Nullable Recipient recipient,
                                        boolean notifyOfNewUsers)
   {
-    super(context, JobParameters.newBuilder()
-                                .withGroupId(DirectoryRefreshJob.class.getSimpleName())
-                                .withNetworkRequirement()
-                                .create());
+    super(context);
 
     this.recipient        = recipient;
     this.notifyOfNewUsers = notifyOfNewUsers;
+  }
+
+  @WorkerThread
+  @Override
+  protected @NonNull JobParameters getJobParameters() {
+    return JobParameters.newBuilder()
+                        .withGroupId(DirectoryRefreshJob.class.getSimpleName())
+                        .withNetworkRequirement()
+                        .create();
   }
 
   @Override

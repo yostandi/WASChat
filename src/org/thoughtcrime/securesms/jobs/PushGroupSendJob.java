@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.jobs;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.WorkerThread;
 
 import com.annimon.stream.Stream;
 
@@ -65,20 +66,28 @@ public class PushGroupSendJob extends PushSendJob implements InjectableType {
   private String filterAddress;
 
   public PushGroupSendJob() {
-    super(null, null);
+    super(null);
   }
 
   public PushGroupSendJob(Context context, long messageId, @NonNull Address destination, @Nullable Address filterAddress) {
-    super(context, JobParameters.newBuilder()
-                                .withGroupId(destination.toGroupString())
-                                .withMasterSecretRequirement()
-                                .withNetworkRequirement()
-                                .withRetryDuration(TimeUnit.DAYS.toMillis(1))
-                                .create());
+    super(context);
 
     this.messageId         = messageId;
     this.filterAddress     = filterAddress == null ? null :filterAddress.toPhoneString();
     this.filterRecipientId = -1;
+  }
+
+  @WorkerThread
+  @Override
+  protected @NonNull JobParameters getJobParameters() throws NoSuchMessageException, MmsException {
+    OutgoingMediaMessage message = DatabaseFactory.getMmsDatabase(context).getOutgoingMessage(messageId);
+
+    return JobParameters.newBuilder()
+                        .withGroupId(message.getRecipient().getAddress().toGroupString())
+                        .withMasterSecretRequirement()
+                        .withNetworkRequirement()
+                        .withRetryDuration(TimeUnit.DAYS.toMillis(1))
+                        .create();
   }
 
   @Override

@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.jobs;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
 
 import org.thoughtcrime.securesms.database.Address;
@@ -45,16 +46,21 @@ public class RetrieveProfileJob extends ContextJob implements InjectableType {
   private Recipient recipient;
 
   public RetrieveProfileJob() {
-    super(null, null);
+    super(null);
   }
 
   public RetrieveProfileJob(Context context, Recipient recipient) {
-    super(context, JobParameters.newBuilder()
-                                .withNetworkRequirement()
-                                .withRetryCount(3)
-                                .create());
-
+    super(context);
     this.recipient = recipient;
+  }
+
+  @WorkerThread
+  @Override
+  protected @NonNull JobParameters getJobParameters() {
+    return JobParameters.newBuilder()
+                        .withNetworkRequirement()
+                        .withRetryCount(3)
+                        .create();
   }
 
   @Override

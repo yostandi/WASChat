@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.jobs;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.support.annotation.WorkerThread;
 
 import org.thoughtcrime.securesms.jobmanager.SafeData;
 import org.thoughtcrime.securesms.logging.Log;
@@ -47,19 +48,25 @@ public class MultiDeviceVerifiedUpdateJob extends ContextJob implements Injectab
   private long           timestamp;
 
   public MultiDeviceVerifiedUpdateJob() {
-    super(null, null);
+    super(null);
   }
 
   public MultiDeviceVerifiedUpdateJob(Context context, Address destination, IdentityKey identityKey, VerifiedStatus verifiedStatus) {
-    super(context, JobParameters.newBuilder()
-                                .withNetworkRequirement()
-                                .withGroupId("__MULTI_DEVICE_VERIFIED_UPDATE__")
-                                .create());
+    super(context);
 
     this.destination    = destination.serialize();
     this.identityKey    = identityKey.serialize();
     this.verifiedStatus = verifiedStatus;
     this.timestamp      = System.currentTimeMillis();
+  }
+
+  @WorkerThread
+  @Override
+  protected @NonNull JobParameters getJobParameters() {
+    return JobParameters.newBuilder()
+                        .withNetworkRequirement()
+                        .withGroupId("__MULTI_DEVICE_VERIFIED_UPDATE__")
+                        .create();
   }
 
   @Override

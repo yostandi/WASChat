@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.jobs;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.support.annotation.WorkerThread;
 
 import org.thoughtcrime.securesms.jobmanager.SafeData;
 import org.thoughtcrime.securesms.logging.Log;
@@ -51,17 +52,22 @@ public class PushGroupUpdateJob extends ContextJob implements InjectableType {
   private byte[] groupId;
 
   public PushGroupUpdateJob() {
-    super(null, null);
+    super(null);
   }
 
   public PushGroupUpdateJob(Context context, String source, byte[] groupId) {
-    super(context, JobParameters.newBuilder()
-                                .withNetworkRequirement()
-                                .withRetryDuration(TimeUnit.DAYS.toMillis(1))
-                                .create());
+    super(context);
 
     this.source  = source;
     this.groupId = groupId;
+  }
+
+  @Override
+  protected @NonNull JobParameters getJobParameters() {
+    return JobParameters.newBuilder()
+                        .withNetworkRequirement()
+                        .withRetryDuration(TimeUnit.DAYS.toMillis(1))
+                        .create();
   }
 
   @Override

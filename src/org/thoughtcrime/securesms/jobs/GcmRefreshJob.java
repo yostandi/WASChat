@@ -22,6 +22,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.support.annotation.NonNull;
+import android.support.annotation.WorkerThread;
 import android.support.v4.app.NotificationCompat;
 
 import org.thoughtcrime.securesms.jobmanager.SafeData;
@@ -54,16 +55,22 @@ public class GcmRefreshJob extends ContextJob implements InjectableType {
   @Inject transient SignalServiceAccountManager textSecureAccountManager;
 
   public GcmRefreshJob() {
-    super(null, null);
+    super(null);
   }
 
   public GcmRefreshJob(Context context) {
-    super(context, JobParameters.newBuilder()
-                                .withGroupId(GcmRefreshJob.class.getSimpleName())
-                                .withDuplicatesIgnored(true)
-                                .withNetworkRequirement()
-                                .withRetryCount(1)
-                                .create());
+    super(context);
+  }
+
+  @WorkerThread
+  @Override
+  protected @NonNull JobParameters getJobParameters() {
+    return JobParameters.newBuilder()
+                        .withGroupId(GcmRefreshJob.class.getSimpleName())
+                        .withDuplicatesIgnored(true)
+                        .withNetworkRequirement()
+                        .withRetryCount(1)
+                        .create();
   }
 
   @Override

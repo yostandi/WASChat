@@ -43,8 +43,8 @@ public abstract class PushSendJob extends SendJob {
   private static final long   serialVersionUID = 5906098204770900739L;
   private static final String TAG              = PushSendJob.class.getSimpleName();
 
-  protected PushSendJob(Context context, JobParameters parameters) {
-    super(context, parameters);
+  protected PushSendJob(Context context) {
+    super(context);
   }
 
   protected static JobParameters constructParameters(Address destination) {

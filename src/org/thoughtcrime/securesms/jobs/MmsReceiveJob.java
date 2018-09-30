@@ -6,6 +6,7 @@ import org.thoughtcrime.securesms.jobmanager.SafeData;
 import org.thoughtcrime.securesms.logging.Log;
 
 import android.support.annotation.NonNull;
+import android.support.annotation.WorkerThread;
 import android.util.Pair;
 
 import com.google.android.mms.pdu_alt.GenericPdu;
@@ -39,14 +40,20 @@ public class MmsReceiveJob extends ContextJob {
   private int    subscriptionId;
 
   public MmsReceiveJob() {
-    super(null, null);
+    super(null);
   }
 
   public MmsReceiveJob(Context context, byte[] data, int subscriptionId) {
-    super(context, JobParameters.newBuilder().create());
+    super(context);
 
     this.data           = data;
     this.subscriptionId = subscriptionId;
+  }
+
+  @WorkerThread
+  @Override
+  protected @NonNull JobParameters getJobParameters() {
+    return JobParameters.newBuilder().create();
   }
 
   @Override

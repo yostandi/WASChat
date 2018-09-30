@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.jobs;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.support.annotation.WorkerThread;
 
 import org.thoughtcrime.securesms.dependencies.InjectableType;
 import org.thoughtcrime.securesms.jobmanager.JobParameters;
@@ -24,14 +25,20 @@ public class PushNotificationReceiveJob extends PushReceivedJob implements Injec
   @Inject transient SignalServiceMessageReceiver receiver;
 
   public PushNotificationReceiveJob() {
-    super(null, null);
+    super(null);
   }
 
   public PushNotificationReceiveJob(Context context) {
-    super(context, JobParameters.newBuilder()
-                                .withNetworkRequirement()
-                                .withGroupId("__notification_received")
-                                .create());
+    super(context);
+  }
+
+  @WorkerThread
+  @Override
+  protected @NonNull JobParameters getJobParameters() {
+    return JobParameters.newBuilder()
+                        .withNetworkRequirement()
+                        .withGroupId("__notification_received")
+                        .create();
   }
 
   @Override

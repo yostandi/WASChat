@@ -4,6 +4,7 @@ package org.thoughtcrime.securesms.jobs;
 import android.Manifest;
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.support.annotation.WorkerThread;
 
 import org.thoughtcrime.securesms.jobmanager.SafeData;
 import org.thoughtcrime.securesms.logging.Log;
@@ -34,14 +35,20 @@ public class LocalBackupJob extends ContextJob {
   private static final String TAG = LocalBackupJob.class.getSimpleName();
 
   public LocalBackupJob() {
-    super(null, null);
+    super(null);
   }
 
   public LocalBackupJob(@NonNull Context context) {
-    super(context, JobParameters.newBuilder()
-                                .withGroupId("__LOCAL_BACKUP__")
-                                .withDuplicatesIgnored(true)
-                                .create());
+    super(context);
+  }
+
+  @WorkerThread
+  @Override
+  protected @NonNull JobParameters getJobParameters() {
+    return JobParameters.newBuilder()
+                        .withGroupId("__LOCAL_BACKUP__")
+                        .withDuplicatesIgnored(true)
+                        .create();
   }
 
   @Override

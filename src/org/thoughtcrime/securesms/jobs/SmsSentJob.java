@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.jobs;
 import android.app.Activity;
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.support.annotation.WorkerThread;
 import android.telephony.SmsManager;
 
 import org.thoughtcrime.securesms.jobmanager.SafeData;
@@ -34,17 +35,23 @@ public class SmsSentJob extends MasterSecretJob {
   private int    result;
 
   public SmsSentJob() {
-    super(null, null);
+    super(null);
   }
 
   public SmsSentJob(Context context, long messageId, String action, int result) {
-    super(context, JobParameters.newBuilder()
-                                .withMasterSecretRequirement()
-                                .create());
+    super(context);
 
     this.messageId = messageId;
     this.action    = action;
     this.result    = result;
+  }
+
+  @WorkerThread
+  @Override
+  protected @NonNull JobParameters getJobParameters() {
+    return JobParameters.newBuilder()
+                        .withMasterSecretRequirement()
+                        .create();
   }
 
   @Override

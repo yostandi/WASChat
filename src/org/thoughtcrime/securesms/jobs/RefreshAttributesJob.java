@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.jobs;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.support.annotation.WorkerThread;
 
 import org.thoughtcrime.securesms.jobmanager.SafeData;
 import org.thoughtcrime.securesms.logging.Log;
@@ -27,14 +28,20 @@ public class RefreshAttributesJob extends ContextJob implements InjectableType {
   @Inject transient SignalServiceAccountManager signalAccountManager;
 
   public RefreshAttributesJob() {
-    super(null, null);
+    super(null);
   }
 
   public RefreshAttributesJob(Context context) {
-    super(context, JobParameters.newBuilder()
-                                .withNetworkRequirement()
-                                .withGroupId(RefreshAttributesJob.class.getName())
-                                .create());
+    super(context);
+  }
+
+  @WorkerThread
+  @Override
+  protected @NonNull JobParameters getJobParameters() {
+    return JobParameters.newBuilder()
+                        .withNetworkRequirement()
+                        .withGroupId(RefreshAttributesJob.class.getName())
+                        .create();
   }
 
   @Override

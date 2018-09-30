@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.jobmanager;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.WorkerThread;
 
 import org.thoughtcrime.securesms.ApplicationContext;
 import org.thoughtcrime.securesms.jobmanager.dependencies.ContextDependent;
@@ -29,17 +30,11 @@ public abstract class Job extends Worker implements Serializable {
   static final String KEY_REQUIRES_MASTER_SECRET = "Job_requires_master_secret";
   static final String KEY_REQUIRES_SQLCIPHER     = "Job_requires_sqlcipher";
 
-  private JobParameters jobParameters;
-
   public Job(@NonNull Context context, @NonNull WorkerParameters workerParams) {
     super(context, workerParams);
   }
 
-  /**
-   * Invoked when a job is first created in our own codebase.
-   */
-  protected Job(@Nullable JobParameters jobParameters) {
-    this.jobParameters = jobParameters;
+  protected Job() {
   }
 
   @NonNull
@@ -133,7 +128,7 @@ public abstract class Job extends Worker implements Serializable {
    * Called if a job fails to run (onShouldRetry returned false, or the number of retries exceeded
    * the job's configured retry count.
    */
-  protected abstract void onCanceled();
+  public abstract void onCanceled();
 
   /**
    * If onRun() throws an exception, this method will be called to determine whether the
@@ -144,9 +139,8 @@ public abstract class Job extends Worker implements Serializable {
    */
   protected abstract boolean onShouldRetry(Exception exception);
 
-  @Nullable JobParameters getJobParameters() {
-    return jobParameters;
-  }
+  @WorkerThread
+  protected abstract @NonNull JobParameters getJobParameters() throws Exception;
 
   private Result retry() {
     onRetry();
@@ -200,7 +194,7 @@ public abstract class Job extends Worker implements Serializable {
   }
 
   private String buildLog(@NonNull UUID id, @NonNull String message) {
-    return "[" + id + "] " + getClass().getSimpleName() + " :: " + message;
+    return "[" + String.valueOf(id) + "] " + getClass().getSimpleName() + " :: " + message;
   }
 
   private String logSuffix() {

@@ -2,6 +2,8 @@ package org.thoughtcrime.securesms.jobmanager;
 
 import android.support.annotation.NonNull;
 
+import org.thoughtcrime.securesms.logging.Log;
+
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -15,6 +17,8 @@ import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
 public class JobManager {
+
+  private static final String TAG = JobManager.class.getSimpleName();
 
   private static final Constraints NETWORK_CONSTRAINT = new Constraints.Builder()
                                                                        .setRequiredNetworkType(NetworkType.CONNECTED)
@@ -32,10 +36,14 @@ public class JobManager {
     executor.execute(() -> {
       workManager.synchronous().pruneWorkSync();
 
-      JobParameters jobParameters = job.getJobParameters();
+      JobParameters jobParameters;
 
-      if (jobParameters == null) {
-        throw new IllegalStateException("Jobs must have JobParameters at this stage.");
+      try {
+        jobParameters = job.getJobParameters();
+      } catch (Exception e) {
+        Log.w(TAG, "Failed to retrieve JobParameters. Failing job.", e);
+        job.onCanceled();
+        return;
       }
 
       Data.Builder dataBuilder = new Data.Builder().putInt(Job.KEY_RETRY_COUNT, jobParameters.getRetryCount())
