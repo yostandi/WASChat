@@ -6,6 +6,7 @@ import android.support.annotation.Nullable;
 
 import org.thoughtcrime.securesms.ApplicationContext;
 import org.thoughtcrime.securesms.jobmanager.dependencies.ContextDependent;
+import org.thoughtcrime.securesms.jobmanager.requirements.NetworkRequirement;
 import org.thoughtcrime.securesms.jobs.requirements.MasterSecretRequirement;
 import org.thoughtcrime.securesms.jobs.requirements.SqlCipherMigrationRequirement;
 import org.thoughtcrime.securesms.logging.Log;
@@ -25,11 +26,14 @@ public abstract class Job extends Worker implements Serializable {
 
   static final String KEY_RETRY_COUNT            = "Job_retry_count";
   static final String KEY_RETRY_UNTIL            = "Job_retry_until";
+  static final String KEY_RETRIES_PER_ATTEMPT    = "Job_retries_per_attempt";
   static final String KEY_SUBMIT_TIME            = "Job_submit_time";
+  static final String KEY_REQUIRES_NETWORK       = "Job_requires_network";
   static final String KEY_REQUIRES_MASTER_SECRET = "Job_requires_master_secret";
   static final String KEY_REQUIRES_SQLCIPHER     = "Job_requires_sqlcipher";
 
   private JobParameters parameters;
+  private int           retriesForCurrentAttempt;
 
   public Job(@NonNull Context context, @NonNull WorkerParameters workerParams) {
     super(context, workerParams);
@@ -74,6 +78,11 @@ public abstract class Job extends Worker implements Serializable {
       }
     } catch (Exception e) {
       if (onShouldRetry(e)) {
+        if (shouldRetryForCurrentAttempt(data)) {
+          log("Retrying again during this attempt due to an exception." + logSuffix(), e);
+          retriesForCurrentAttempt++;
+          return doWork();
+        }
         log("Retrying after a retryable exception." + logSuffix(), e);
         return retry();
       }
@@ -161,6 +170,10 @@ public abstract class Job extends Worker implements Serializable {
   private boolean requirementsMet(Data data) {
     boolean met = true;
 
+    if (data.getBoolean(KEY_REQUIRES_NETWORK, false)) {
+      met &= new NetworkRequirement(getApplicationContext()).isPresent();
+    }
+
     if (data.getBoolean(KEY_REQUIRES_MASTER_SECRET, false)) {
       met &= new MasterSecretRequirement(getApplicationContext()).isPresent();
     }
@@ -181,6 +194,26 @@ public abstract class Job extends Worker implements Serializable {
     }
 
     return System.currentTimeMillis() < retryUntil;
+  }
+
+  private boolean shouldRetryForCurrentAttempt(Data data) {
+    int retriesAllowed = data.getInt(KEY_RETRIES_PER_ATTEMPT, 0);
+
+    if (retriesAllowed <= 0) {
+      return false;
+    }
+
+    if (retriesForCurrentAttempt >= retriesAllowed) {
+      log("Cannot retry again in this attempt because we've used up our " + retriesAllowed + " retries." + logSuffix());
+      return false;
+    }
+
+    if (!requirementsMet(data)) {
+      log("Cannot retry again in this attempt because our requirements aren't met.");
+      return false;
+    }
+
+    return true;
   }
 
   private void log(@NonNull String message) {
@@ -205,6 +238,6 @@ public abstract class Job extends Worker implements Serializable {
 
   private String logSuffix() {
     long timeSinceSubmission = System.currentTimeMillis() - getInputData().getLong(KEY_SUBMIT_TIME, 0);
-    return " (Time since submission: " + timeSinceSubmission + " ms, Run attempt: " + getRunAttemptCount() + ")";
+    return " (Time since submission: " + timeSinceSubmission + " ms, Run attempt: " + getRunAttemptCount() + ", Retries for attempt: " + retriesForCurrentAttempt + ")";
   }
 }

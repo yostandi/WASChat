@@ -40,7 +40,9 @@ public class JobManager {
 
       Data.Builder dataBuilder = new Data.Builder().putInt(Job.KEY_RETRY_COUNT, jobParameters.getRetryCount())
                                                    .putLong(Job.KEY_RETRY_UNTIL, jobParameters.getRetryUntil())
+                                                   .putInt(Job.KEY_RETRIES_PER_ATTEMPT, jobParameters.getRetriesPerAttempt())
                                                    .putLong(Job.KEY_SUBMIT_TIME, System.currentTimeMillis())
+                                                   .putBoolean(Job.KEY_REQUIRES_NETWORK, jobParameters.requiresNetwork())
                                                    .putBoolean(Job.KEY_REQUIRES_MASTER_SECRET, jobParameters.requiresMasterSecret())
                                                    .putBoolean(Job.KEY_REQUIRES_SQLCIPHER, jobParameters.requiresSqlCipher());
       Data data = job.serialize(dataBuilder);

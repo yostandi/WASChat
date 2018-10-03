@@ -40,6 +40,7 @@ public class JobParameters implements Serializable {
   private final boolean           requiresSqlCipher;
   private final int               retryCount;
   private final long              retryUntil;
+  private final int               retriesPerAttempt;
   private final String            groupId;
   private final boolean           ignoreDuplicates;
 
@@ -49,7 +50,8 @@ public class JobParameters implements Serializable {
                         boolean requiresMasterSecret,
                         boolean requiresSqlCipher,
                         int retryCount,
-                        long retryUntil)
+                        long retryUntil,
+                        int retriesPerAttempt)
   {
     this.groupId              = groupId;
     this.ignoreDuplicates     = ignoreDuplicates;
@@ -59,6 +61,7 @@ public class JobParameters implements Serializable {
     this.requiresSqlCipher    = requiresSqlCipher;
     this.retryCount           = retryCount;
     this.retryUntil           = retryUntil;
+    this.retriesPerAttempt    = retriesPerAttempt;
   }
 
   public boolean shouldIgnoreDuplicates() {
@@ -124,6 +127,10 @@ public class JobParameters implements Serializable {
     return retryUntil;
   }
 
+  public int getRetriesPerAttempt() {
+    return retriesPerAttempt;
+  }
+
   /**
    * @return a builder used to construct JobParameters.
    */
@@ -138,6 +145,7 @@ public class JobParameters implements Serializable {
   public static class Builder {
     private int               retryCount           = 100;
     private long              retryDuration        = 0;
+    private int               retriesPerAttempt    = 0;
     private String            groupId              = null;
     private boolean           ignoreDuplicates     = false;
     private boolean           requiresNetwork      = false;
@@ -186,6 +194,18 @@ public class JobParameters implements Serializable {
     }
 
     /**
+     * Specify how many times a job will be retried back-to-back per individual run attempt. For
+     * example, if you specify a retry count of 3 with 5 retries per attempt, then the job could run
+     * up to 15 times (3 batches of 5).
+     * @param retriesPerAttempt The number of times the job will be retried per individual run attempt.
+     * @return the builder
+     */
+    public Builder withRetriesPerAttempt(int retriesPerAttempt) {
+      this.retriesPerAttempt = retriesPerAttempt;
+      return this;
+    }
+
+    /**
      * Specify a groupId the job should belong to.  Jobs with the same groupId are guaranteed to be
      * executed serially.
      *
@@ -216,7 +236,7 @@ public class JobParameters implements Serializable {
      * @return the JobParameters instance that describes a Job.
      */
     public JobParameters create() {
-      return new JobParameters(groupId, ignoreDuplicates, requiresNetwork, requiresMasterSecret, requiresSqlCipher, retryCount, System.currentTimeMillis() + retryDuration);
+      return new JobParameters(groupId, ignoreDuplicates, requiresNetwork, requiresMasterSecret, requiresSqlCipher, retryCount, System.currentTimeMillis() + retryDuration, retriesPerAttempt);
     }
   }
 }

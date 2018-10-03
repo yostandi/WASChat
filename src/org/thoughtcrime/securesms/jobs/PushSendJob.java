@@ -53,6 +53,7 @@ public abstract class PushSendJob extends SendJob {
     builder.withMasterSecretRequirement();
     builder.withNetworkRequirement();
     builder.withRetryDuration(TimeUnit.DAYS.toMillis(1));
+    builder.withRetriesPerAttempt(5);
 
     return builder.create();
   }

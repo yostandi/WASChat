@@ -74,6 +74,7 @@ public class PushGroupSendJob extends PushSendJob implements InjectableType {
                                 .withMasterSecretRequirement()
                                 .withNetworkRequirement()
                                 .withRetryDuration(TimeUnit.DAYS.toMillis(1))
+                                .withRetriesPerAttempt(5)
                                 .create());
 
     this.messageId         = messageId;

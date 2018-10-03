@@ -65,6 +65,7 @@ public class AttachmentDownloadJob extends MasterSecretJob implements Injectable
                                 .withGroupId(AttachmentDownloadJob.class.getCanonicalName())
                                 .withMasterSecretRequirement()
                                 .withNetworkRequirement()
+                                .withRetriesPerAttempt(5)
                                 .create());
 
     this.messageId    = messageId;
