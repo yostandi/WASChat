@@ -77,12 +77,6 @@ public abstract class PassphraseRequiredActionBarActivity extends BaseActionBarA
     Log.i(TAG, "onPause()");
     super.onPause();
     isVisible = false;
-
-    // Android P has a bug in foreground timings where starting a service in onPause() can still crash
-    Util.postToMain(() -> {
-      KeyCachingService.registerPassphraseActivityStopped(this);
-      if (!networkAccess.isCensored(this)) MessageRetrievalService.registerActivityStopped(this);
-    });
   }
 
   @Override

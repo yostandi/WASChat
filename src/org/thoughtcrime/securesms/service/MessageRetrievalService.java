@@ -1,9 +1,13 @@
 package org.thoughtcrime.securesms.service;
 
 import android.app.Service;
+import android.arch.lifecycle.DefaultLifecycleObserver;
+import android.arch.lifecycle.LifecycleOwner;
+import android.arch.lifecycle.ProcessLifecycleOwner;
 import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 
@@ -12,7 +16,6 @@ import org.thoughtcrime.securesms.logging.Log;
 import org.thoughtcrime.securesms.ApplicationContext;
 import org.thoughtcrime.securesms.R;
 import org.thoughtcrime.securesms.dependencies.InjectableType;
-import org.thoughtcrime.securesms.gcm.GcmBroadcastReceiver;
 import org.thoughtcrime.securesms.jobmanager.requirements.NetworkRequirement;
 import org.thoughtcrime.securesms.jobmanager.requirements.NetworkRequirementProvider;
 import org.thoughtcrime.securesms.jobmanager.requirements.RequirementListener;
@@ -23,8 +26,6 @@ import org.whispersystems.libsignal.InvalidVersionException;
 import org.whispersystems.signalservice.api.SignalServiceMessagePipe;
 import org.whispersystems.signalservice.api.SignalServiceMessageReceiver;
 
-import java.util.LinkedList;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -36,8 +37,6 @@ public class MessageRetrievalService extends Service implements InjectableType, 
   private static final String TAG = MessageRetrievalService.class.getSimpleName();
 
   public static final  String ACTION_ACTIVITY_STARTED  = "ACTIVITY_STARTED";
-  public static final  String ACTION_ACTIVITY_FINISHED = "ACTIVITY_FINISHED";
-  public static final  String ACTION_PUSH_RECEIVED     = "PUSH_RECEIVED";
   public static final  String ACTION_INITIALIZE        = "INITIALIZE";
   public static final  int    FOREGROUND_ID            = 313399;
 
@@ -49,9 +48,9 @@ public class MessageRetrievalService extends Service implements InjectableType, 
   @Inject
   public SignalServiceMessageReceiver receiver;
 
-  private int                    activeActivities = 0;
-  private List<Intent>           pushPending      = new LinkedList<>();
-  private MessageRetrievalThread retrievalThread  = null;
+  private boolean                isAppForeground = false;
+  private MessageRetrievalThread retrievalThread = null;
+
 
   public static SignalServiceMessagePipe pipe = null;
 
@@ -69,15 +68,21 @@ public class MessageRetrievalService extends Service implements InjectableType, 
     retrievalThread.start();
 
     setForegroundIfNecessary();
+
+    ProcessLifecycleOwner.get().getLifecycle().addObserver(new DefaultLifecycleObserver() {
+      @Override
+      public void onStart(@NonNull LifecycleOwner owner) {
+        onAppForegrounded();
+      }
+
+      @Override
+      public void onStop(@NonNull LifecycleOwner owner) {
+        onAppBackgrounded();
+      }
+    });
   }
 
   public int onStartCommand(Intent intent, int flags, int startId) {
-    if (intent == null) return START_STICKY;
-
-    if      (ACTION_ACTIVITY_STARTED.equals(intent.getAction()))  incrementActive();
-    else if (ACTION_ACTIVITY_FINISHED.equals(intent.getAction())) decrementActive();
-    else if (ACTION_PUSH_RECEIVED.equals(intent.getAction()))     incrementPushReceived(intent);
-
     return START_STICKY;
   }
 
@@ -116,40 +121,27 @@ public class MessageRetrievalService extends Service implements InjectableType, 
     }
   }
 
-  private synchronized void incrementActive() {
-    activeActivities++;
-    Log.d(TAG, "Active Count: " + activeActivities);
+  private synchronized void onAppForegrounded() {
+    Log.d(TAG, "App foregrounded.");
+    isAppForeground = true;
     notifyAll();
   }
 
-  private synchronized void decrementActive() {
-    activeActivities--;
-    Log.d(TAG, "Active Count: " + activeActivities);
+  private synchronized void onAppBackgrounded() {
+    Log.d(TAG, "App backgrounded.");
+    isAppForeground = false;
     notifyAll();
-  }
-
-  private synchronized void incrementPushReceived(Intent intent) {
-    pushPending.add(intent);
-    notifyAll();
-  }
-
-  private synchronized void decrementPushReceived() {
-    if (!pushPending.isEmpty()) {
-      Intent intent = pushPending.remove(0);
-      GcmBroadcastReceiver.completeWakefulIntent(intent);
-      notifyAll();
-    }
   }
 
   private synchronized boolean isConnectionNecessary() {
     boolean isGcmDisabled = TextSecurePreferences.isGcmDisabled(this);
 
-    Log.d(TAG, String.format("Network requirement: %s, active activities: %s, push pending: %s, gcm disabled: %b",
-                             networkRequirement.isPresent(), activeActivities, pushPending.size(), isGcmDisabled));
+    Log.d(TAG, String.format("Network requirement: %s, app in foreground: %s, gcm disabled: %b",
+                             networkRequirement.isPresent(), isAppForeground, isGcmDisabled));
 
-    return TextSecurePreferences.isPushRegistered(this)                       &&
-           TextSecurePreferences.isWebsocketRegistered(this)                  &&
-           (activeActivities > 0 || !pushPending.isEmpty() || isGcmDisabled)  &&
+    return TextSecurePreferences.isPushRegistered(this)      &&
+           TextSecurePreferences.isWebsocketRegistered(this) &&
+           (isAppForeground || isGcmDisabled)                &&
            networkRequirement.isPresent();
   }
 
@@ -172,12 +164,6 @@ public class MessageRetrievalService extends Service implements InjectableType, 
   public static void registerActivityStarted(Context activity) {
     Intent intent = new Intent(activity, MessageRetrievalService.class);
     intent.setAction(MessageRetrievalService.ACTION_ACTIVITY_STARTED);
-    activity.startService(intent);
-  }
-
-  public static void registerActivityStopped(Context activity) {
-    Intent intent = new Intent(activity, MessageRetrievalService.class);
-    intent.setAction(MessageRetrievalService.ACTION_ACTIVITY_FINISHED);
     activity.startService(intent);
   }
 
@@ -213,7 +199,6 @@ public class MessageRetrievalService extends Service implements InjectableType, 
                              envelope -> {
                                Log.i(TAG, "Retrieved envelope! " + envelope.getSource());
                                new PushContentReceiveJob(getApplicationContext()).processEnvelope(envelope);
-                               decrementPushReceived();
                              });
             } catch (TimeoutException e) {
               Log.w(TAG, "Application level read timeout...");
