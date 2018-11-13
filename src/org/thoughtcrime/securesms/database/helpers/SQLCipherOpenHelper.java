@@ -10,6 +10,7 @@ import android.support.annotation.NonNull;
 import android.text.TextUtils;
 
 import org.thoughtcrime.securesms.database.Address;
+import org.thoughtcrime.securesms.database.WorkResultDatabase;
 import org.thoughtcrime.securesms.logging.Log;
 
 import net.sqlcipher.database.SQLiteDatabase;
@@ -57,8 +58,9 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   private static final int QUOTE_MISSING                    = 11;
   private static final int NOTIFICATION_CHANNELS            = 12;
   private static final int SECRET_SENDER                    = 13;
+  private static final int WORK_RESULT_CACHE                = 14;
 
-  private static final int    DATABASE_VERSION = 13;
+  private static final int    DATABASE_VERSION = 14;
   private static final String DATABASE_NAME    = "signal.db";
 
   private final Context        context;
@@ -98,6 +100,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     db.execSQL(OneTimePreKeyDatabase.CREATE_TABLE);
     db.execSQL(SignedPreKeyDatabase.CREATE_TABLE);
     db.execSQL(SessionDatabase.CREATE_TABLE);
+    db.execSQL(WorkResultDatabase.CREATE_TABLE);
     for (String sql : SearchDatabase.CREATE_TABLE) {
       db.execSQL(sql);
     }
@@ -292,6 +295,10 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
         db.execSQL("ALTER TABLE group_receipts ADD COLUMN unidentified INTEGER DEFAULT 0");
         db.execSQL("ALTER TABLE mms ADD COLUMN unidentified INTEGER DEFAULT 0");
         db.execSQL("ALTER TABLE sms ADD COLUMN unidentified INTEGER DEFAULT 0");
+      }
+
+      if (oldVersion < WORK_RESULT_CACHE) {
+        db.execSQL("CREATE TABLE work_result (_id INTEGER PRIMARY KEY, work_id TEXT UNIQUE, result INTEGER, timestamp INTEGER);");
       }
 
       db.setTransactionSuccessful();

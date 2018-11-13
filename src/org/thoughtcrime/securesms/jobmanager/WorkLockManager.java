@@ -57,8 +57,7 @@ class WorkLockManager {
     private final Semaphore lock;
     private final UUID      uuid;
 
-    private Worker.Result result;
-    private int           count;
+    private int count;
 
     private WorkLock(@NonNull UUID uuid) {
       this.uuid = uuid;
@@ -76,14 +75,6 @@ class WorkLockManager {
 
     private @NonNull Semaphore getLock() {
       return lock;
-    }
-
-    void setResult(@NonNull Worker.Result result) {
-      this.result = result;
-    }
-
-    @Nullable Worker.Result getResult() {
-      return result;
     }
 
     @Override

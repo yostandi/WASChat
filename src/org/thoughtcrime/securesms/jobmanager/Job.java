@@ -6,17 +6,19 @@ import android.support.annotation.Nullable;
 
 import org.thoughtcrime.securesms.ApplicationContext;
 import org.thoughtcrime.securesms.R;
+import org.thoughtcrime.securesms.database.DatabaseFactory;
+import org.thoughtcrime.securesms.database.WorkResultDatabase;
 import org.thoughtcrime.securesms.jobmanager.dependencies.ContextDependent;
 import org.thoughtcrime.securesms.jobmanager.requirements.NetworkRequirement;
 import org.thoughtcrime.securesms.jobs.requirements.MasterSecretRequirement;
 import org.thoughtcrime.securesms.jobs.requirements.SqlCipherMigrationRequirement;
 import org.thoughtcrime.securesms.logging.Log;
 import org.thoughtcrime.securesms.service.GenericForegroundService;
+import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import androidx.work.Data;
 import androidx.work.Worker;
@@ -29,6 +31,7 @@ public abstract class Job extends Worker implements Serializable {
   private static final String TAG = Job.class.getSimpleName();
 
   private static final WorkLockManager WORK_LOCK_MANAGER = new WorkLockManager();
+  private static final long            LEDGER_CUTOFF     = TimeUnit.DAYS.toMillis(3);
 
   static final String KEY_RETRY_COUNT            = "Job_retry_count";
   static final String KEY_RETRY_UNTIL            = "Job_retry_until";
@@ -55,13 +58,26 @@ public abstract class Job extends Worker implements Serializable {
     log("doWork()" + logSuffix());
 
     try (WorkLockManager.WorkLock workLock = WORK_LOCK_MANAGER.acquire(getId())) {
-      Result result = workLock.getResult();
+      WorkResultDatabase resultDatabase = DatabaseFactory.getWorkResultDatabase(getApplicationContext());
+      Optional<Result>   existingResult = resultDatabase.getResult(getId());
 
-      if (result == null) {
-        result = doWorkInternal();
-        workLock.setResult(result);
-      } else {
-        log("Using result from preempted run (" + result + ")." + logSuffix());
+      if (existingResult.isPresent()) {
+        log("Using result from preempted run (" + existingResult.get() + ")." + logSuffix());
+
+        if (!isStopped()) {
+          log("Releasing the cached result." + logSuffix());
+          resultDatabase.removeResult(getId());
+        }
+
+        return existingResult.get();
+      }
+
+      Result result = doWorkInternal();
+
+      if (isStopped() && result != Result.RETRY) {
+        log("Job finished in a 'stopped' state -- saving the result (" + result + ") for future use." + logSuffix());
+        resultDatabase.trim(System.currentTimeMillis() - LEDGER_CUTOFF);
+        resultDatabase.saveResult(getId(), result, System.currentTimeMillis());
       }
 
       return result;
