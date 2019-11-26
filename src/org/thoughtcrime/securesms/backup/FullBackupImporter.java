@@ -40,12 +40,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.channels.FileChannel;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -59,6 +61,11 @@ public class FullBackupImporter extends FullBackupBase {
 
   @SuppressWarnings("unused")
   private static final String TAG = FullBackupImporter.class.getSimpleName();
+
+  private static final int MAC_LENGTH = 10;
+
+  /** Largest frame it will detect when searching linearly during bad attachment length restoration */
+  private static final int LARGEST_SEARCH_FRAME = 100 * 1024 * 1024;
 
   public static void importFile(@NonNull Context context, @NonNull AttachmentSecret attachmentSecret,
                                 @NonNull SQLiteDatabase db, @NonNull File file, @NonNull String passphrase)
@@ -80,7 +87,7 @@ public class FullBackupImporter extends FullBackupBase {
         if      (frame.hasVersion())    processVersion(db, frame.getVersion());
         else if (frame.hasStatement())  processStatement(db, frame.getStatement());
         else if (frame.hasPreference()) processPreference(context, frame.getPreference());
-        else if (frame.hasAttachment()) processAttachment(context, attachmentSecret, db, frame.getAttachment(), inputStream);
+        else if (frame.hasAttachment()) processAndRestoreBadLengthAttachment(context, attachmentSecret, db, inputStream, frame);
         else if (frame.hasSticker())    processSticker(context, attachmentSecret, db, frame.getSticker(), inputStream);
         else if (frame.hasAvatar())     processAvatar(context, db, frame.getAvatar(), inputStream);
       }
@@ -91,6 +98,48 @@ public class FullBackupImporter extends FullBackupBase {
     }
 
     EventBus.getDefault().post(new BackupEvent(BackupEvent.Type.FINISHED, count));
+  }
+
+  private static void processAndRestoreBadLengthAttachment(@NonNull Context context,
+                                                           @NonNull AttachmentSecret attachmentSecret,
+                                                           @NonNull SQLiteDatabase db,
+                                                           BackupRecordInputStream inputStream,
+                                                           BackupFrame frame)
+    throws IOException
+  {
+    final BackupRecordInputStream.Mark mark        = inputStream.mark();
+    final int                          frameLength = frame.getAttachment().getLength();
+
+    if (frameLength <= inputStream.remainingLength()) {
+      try {
+        processAttachment(context, attachmentSecret, db, frame.getAttachment(), inputStream);
+        return;
+      } catch (BadMacException e) {
+        Log.w(TAG, "Seen a bad mac exception, attempting to find length of attachment");
+      }
+    } else {
+      Log.w(TAG, "Frame length exceeded remaining file bytes, attempting to find length of attachment");
+    }
+
+    inputStream.reset(mark);
+    int length = inputStream.findCorrectSizeForAttachment();
+
+    if (frameLength == length) throw new AssertionError();
+
+    Attachment withAlternativeLength = frame.getAttachment()
+                                            .toBuilder()
+                                            .setLength(length)
+                                            .build();
+
+    try {
+      Log.i(TAG, String.format(Locale.US, "Trying a length of %d, frame said %d", length, frameLength));
+      inputStream.reset(mark);
+      processAttachment(context, attachmentSecret, db, withAlternativeLength, inputStream);
+      Log.i(TAG, String.format(Locale.US, "Successfully restored attachment with length %d, frame said %d", length, frameLength));
+    } catch (BadMacException e) {
+      Log.w(TAG, String.format(Locale.US, "Still failed to process attachment with length %d", length));
+      throw e;
+    }
   }
 
   private static void processVersion(@NonNull SQLiteDatabase db, DatabaseVersion version) throws IOException {
@@ -141,11 +190,9 @@ public class FullBackupImporter extends FullBackupBase {
       contentValues.put(AttachmentDatabase.THUMBNAIL, (String)null);
       contentValues.put(AttachmentDatabase.DATA_RANDOM, output.first);
     } catch (BadMacException e) {
-      Log.w(TAG, "Bad MAC for attachment " + attachment.getAttachmentId() + "! Can't restore it.", e);
+      Log.w(TAG, String.format(Locale.US, "Bad MAC for attachment %d!", attachment.getAttachmentId()), e);
       dataFile.delete();
-      contentValues.put(AttachmentDatabase.DATA, (String) null);
-      contentValues.put(AttachmentDatabase.THUMBNAIL, (String) null);
-      contentValues.put(AttachmentDatabase.DATA_RANDOM, (String) null);
+      throw e;
     }
 
     db.update(AttachmentDatabase.TABLE_NAME, contentValues,
@@ -212,9 +259,9 @@ public class FullBackupImporter extends FullBackupBase {
 
   private static class BackupRecordInputStream extends BackupStream {
 
-    private final InputStream in;
-    private final Cipher      cipher;
-    private final Mac         mac;
+    private final FileInputStream in;
+    private final Cipher          cipher;
+    private final Mac             mac;
 
     private final byte[] cipherKey;
     private final byte[] macKey;
@@ -226,11 +273,8 @@ public class FullBackupImporter extends FullBackupBase {
       try {
         this.in     = new FileInputStream(file);
 
-        byte[] headerLengthBytes = new byte[4];
-        Util.readFully(in, headerLengthBytes);
-
-        int headerLength = Conversions.byteArrayToInt(headerLengthBytes);
-        byte[] headerFrame = new byte[headerLength];
+        int    headerLength = readInt(in);
+        byte[] headerFrame  = new byte[headerLength];
         Util.readFully(in, headerFrame);
 
         BackupFrame frame = BackupFrame.parseFrom(headerFrame);
@@ -299,8 +343,8 @@ public class FullBackupImporter extends FullBackupBase {
 
         out.close();
 
-        byte[] ourMac   = ByteUtil.trim(mac.doFinal(), 10);
-        byte[] theirMac = new byte[10];
+        byte[] ourMac   = ByteUtil.trim(mac.doFinal(), MAC_LENGTH);
+        byte[] theirMac = new byte[MAC_LENGTH];
 
         try {
           Util.readFully(in, theirMac);
@@ -317,18 +361,20 @@ public class FullBackupImporter extends FullBackupBase {
     }
 
     private BackupFrame readFrame(InputStream in) throws IOException {
-      try {
-        byte[] length = new byte[4];
-        Util.readFully(in, length);
+      int frameSize = readInt(in);
+      return readBackupFrame(in, frameSize);
+    }
 
-        byte[] frame = new byte[Conversions.byteArrayToInt(length)];
+    private BackupFrame readBackupFrame(InputStream in, int frameSize) throws IOException {
+      try {
+        byte[] frame = new byte[frameSize];
         Util.readFully(in, frame);
 
-        byte[] theirMac = new byte[10];
-        System.arraycopy(frame, frame.length - 10, theirMac, 0, theirMac.length);
+        byte[] theirMac = new byte[MAC_LENGTH];
+        System.arraycopy(frame, frame.length - MAC_LENGTH, theirMac, 0, theirMac.length);
 
-        mac.update(frame, 0, frame.length - 10);
-        byte[] ourMac = ByteUtil.trim(mac.doFinal(), 10);
+        mac.update(frame, 0, frame.length - MAC_LENGTH);
+        byte[] ourMac = ByteUtil.trim(mac.doFinal(), MAC_LENGTH);
 
         if (!MessageDigest.isEqual(ourMac, theirMac)) {
           throw new IOException("Bad MAC");
@@ -337,13 +383,93 @@ public class FullBackupImporter extends FullBackupBase {
         Conversions.intToByteArray(iv, 0, counter++);
         cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(cipherKey, "AES"), new IvParameterSpec(iv));
 
-        byte[] plaintext = cipher.doFinal(frame, 0, frame.length - 10);
+        byte[] plaintext = cipher.doFinal(frame, 0, frame.length - MAC_LENGTH);
 
         return BackupFrame.parseFrom(plaintext);
       } catch (InvalidKeyException | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e) {
         throw new AssertionError(e);
       }
     }
+
+    /** Save position and state of {@link BackupRecordInputStream} */
+    public Mark mark() throws IOException {
+      return new Mark(in.getChannel().position(), counter);
+    }
+
+    /** Restore a saved position and state of {@link BackupRecordInputStream} */
+    public void reset(Mark mark) throws IOException {
+      in.getChannel().position(mark.position);
+      counter = mark.counter;
+    }
+
+    private long remainingLength() throws IOException {
+      FileChannel channel = in.getChannel();
+      return channel.size() - channel.position();
+    }
+
+    private static class Mark {
+      private final long position;
+      private final int  counter;
+
+      Mark(long position, int counter) {
+        this.position = position;
+        this.counter  = counter;
+      }
+    }
+
+    private int findCorrectSizeForAttachment() throws IOException {
+      final Mark mark = mark();
+
+      try {
+        counter += 1; // for the attachment
+
+        long skipMac = in.skip(MAC_LENGTH); // the mac isn't here exactly, but we know there are at least 10 bytes where the next frame cannot be
+        if (skipMac != MAC_LENGTH) throw new IOException("Unable to skip offset");
+
+        long posOfNextFrame = findNextFrame();
+
+        if (posOfNextFrame == -1) {
+          throw new IOException("Unable to find another frame");
+        }
+
+        return (int) (posOfNextFrame - mark.position - MAC_LENGTH);
+      } finally {
+        reset(mark);
+      }
+    }
+
+    /**
+     * Finds the file position of the next valid frame.
+     */
+    private long findNextFrame() throws IOException {
+      final FileChannel channel        = in.getChannel();
+      final long        limit          = channel.size() - 20;
+      final int         initialCounter = counter;
+
+      for (long i = channel.position(); i < limit; i++) {
+        channel.position(i);
+        counter = initialCounter;
+
+        int frameSize = readInt(in);
+        if (frameSize <= 0 || frameSize > LARGEST_SEARCH_FRAME || frameSize > remainingLength()) continue;
+
+        try {
+          readBackupFrame(in, frameSize);
+        } catch (IOException e) {
+          continue;
+        }
+        Log.i(TAG, String.format(Locale.US, "Found a frame at file offset %d", i));
+        return i;
+      }
+
+      return -1;
+    }
+  }
+
+  private static int readInt(InputStream in) throws IOException {
+    byte[] intBytes = new byte[4];
+    Util.readFully(in, intBytes);
+    return Conversions.byteArrayToInt(intBytes);
   }
 
   private static class BadMacException extends IOException {}
